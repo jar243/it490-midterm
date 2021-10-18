@@ -1,6 +1,7 @@
 from pydantic import BaseSettings
 from typing import Optional
 from sqlmodel import Field, Session, SQLModel, create_engine
+import pika
 
 
 # DATABASE MODELS
@@ -16,13 +17,11 @@ class User(SQLModel, table=True):
 
 
 class EnvConfig(BaseSettings):
-    # broker_host: str
-    # broker_port: int = 5672
-    # broker_user: str
-    # broker_password: str
-    # broker_vhost: str
-    # broker_exchange: str
-    # broker_queue: str
+    broker_host: str
+    broker_port: int = 5672
+    broker_user: str
+    broker_password: str
+    broker_vhost: str
     mysql_host: str = "127.0.0.1"
     mysql_port: int = 3306
     mysql_user: str
@@ -33,11 +32,30 @@ class EnvConfig(BaseSettings):
         env_file_encoding = "utf-8"
 
 
+def create_rmq_channel(cfg: EnvConfig):
+    conn_params = pika.ConnectionParameters(
+        host=cfg.broker_host,
+        port=cfg.broker_port,
+        virtual_host=cfg.broker_vhost,
+        credentials=pika.PlainCredentials(cfg.broker_user, cfg.broker_password),
+    )
+    rmq_conn = pika.BlockingConnection(conn_params)
+    return rmq_conn.channel()
+
+
 def main():
     # LOAD CONFIG FROM ENVIRONMENT
     cfg = EnvConfig()
 
     # CONNECT TO RABBITMQ
+    rmq_channel = create_rmq_channel(cfg)
+    rmq_channel.exchange_declare("db")
+    rmq_channel.queue_declare("users")
+    rmq_channel.queue_bind("users", "db", "users")
+    rmq_channel.queue_declare("auth")
+    rmq_channel.queue_bind("auth", "db", "auth")
+    rmq_channel.queue_declare("movies")
+    rmq_channel.queue_bind("movies", "db", "movies")
 
     # SETUP MYSQL ENGINE
     db_engine = create_engine(

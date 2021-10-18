@@ -9,6 +9,7 @@ python = "^3.9"
 pydantic = {extras = ["dotenv"], version = "^1.8.2"}
 sqlmodel = "^0.0.4"
 PyMySQL = "^1.0.2"
+pika = "^1.2.0"
 
 [tool.poetry.dev-dependencies]
 black = "^21.9b0"
