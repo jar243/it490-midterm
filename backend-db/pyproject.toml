@@ -6,13 +6,17 @@ authors = ["Your Name <you@example.com>"]
 
 [tool.poetry.dependencies]
 python = "^3.9"
-pydantic = {extras = ["dotenv"], version = "^1.8.2"}
+pydantic = {extras = ["email", "dotenv"], version = "^1.8.2"}
 sqlmodel = "^0.0.4"
 PyMySQL = "^1.0.2"
 pika = "^1.2.0"
+cryptography = "^35.0.0"
 
 [tool.poetry.dev-dependencies]
 black = "^21.9b0"
+flake8 = "^4.0.1"
+mypy = "^0.910"
+isort = "^5.9.3"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
