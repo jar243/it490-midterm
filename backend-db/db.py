@@ -1,28 +1,30 @@
 import hashlib
-import os
-from typing import Optional
-from datetime import datetime, timedelta
 import re
 import secrets
+from datetime import datetime, timedelta
+from typing import Optional
 
 from pydantic import EmailStr
-from sqlmodel import Field, SQLModel, create_engine, Session, select
+from sqlmodel import Field, Relationship, Session, SQLModel, create_engine, select
 
 from env import EnvConfig
 
 # CONSTANTS
 
+
 USERNAME_REGEX = r"^[\w\-]{3,}$"
-DISPLAY_NAME_REGEX = r"^[\w\- ]{3,}$"
+DISPLAY_NAME_REGEX = r"^[\w\-' ]{3,}$"
 PASSWORD_REGEX = r"^[\w\-&^/\\$#@!%*().,\"';:[\]{}]{5,30}$"
 
-# MODELS
+
+# TABLE MODELS
 
 
 class User(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     email: EmailStr = Field(primary_key=True)
     username: str = Field(regex=USERNAME_REGEX, primary_key=True)
+    movie_ratings: list["MovieRating"] = Relationship()
     display_name: str = Field(regex=DISPLAY_NAME_REGEX)
     password_hash: bytes
     password_salt: bytes
@@ -35,12 +37,27 @@ class User(SQLModel, table=True):
 
 
 class AuthToken(SQLModel, table=True):
-    token: str = Field(primary_key=True)
+    token: str = Field(default=None, primary_key=True)
     user_id: int = Field(foreign_key="user.id")
     expiration_date: datetime = datetime.utcnow() + timedelta(1)
 
 
-# CUSTOM EXCEPTION
+class Movie(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    title: str
+    year: int
+    genre: str
+
+
+class MovieRating(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    user_id: int = Field(foreign_key="user.id")
+    movie_id: int = Field(foreign_key="movie.id")
+    rating: int = Field(ge=1, le=5)
+    comment: str = Field(default="", max_length=1000)
+
+
+# CUSTOM EXCEPTION FOR USERS
 
 
 class UserError(Exception):
@@ -60,11 +77,10 @@ class DatabaseFacade:
     def create_user(self, email: str, username: str, display_name: str, password: str):
         if not re.match(PASSWORD_REGEX, password):
             raise UserError("Invalid password")
-        pass_salt = os.urandom(32)
+        pass_salt = secrets.token_bytes(32)
         pass_hash = hashlib.pbkdf2_hmac(
             "sha256", password.encode("utf-8"), pass_salt, 100000
         )
-
         new_user = User(
             email=EmailStr(email),
             username=username,
@@ -102,5 +118,21 @@ class DatabaseFacade:
             token, user = result
             if datetime.utcnow() > token.expiration_date:
                 session.delete(token)
+                session.commit()
                 return None
         return user
+
+    def delete_token(self, token_str: str):
+        with Session(self._engine) as session:
+            statement = select(AuthToken).where(AuthToken.token == token_str)
+            token = session.exec(statement).first()
+            if token is None:
+                return
+            session.delete(token)
+            session.commit()
+
+    def get_user_by_id(self, user_id: int):
+        # can cause NoResultFound exception
+        with Session(self._engine) as session:
+            statement = select(User).where(User.id == user_id)
+            return session.exec(statement).one()
