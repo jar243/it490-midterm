@@ -1,24 +1,7 @@
 import pika
-from pydantic import BaseSettings
 
-from db import init_db_engine
-
-# CONFIG MODELS
-
-
-class EnvConfig(BaseSettings):
-    broker_host: str = "127.0.0.1"
-    broker_port: int = 5672
-    broker_user: str = "guest"
-    broker_password: str = "guest"
-    mysql_host: str = "127.0.0.1"
-    mysql_port: int = 3306
-    mysql_user: str = "devuser"
-    mysql_password: str = "devpassword"
-
-    class Config:
-        env_file = ".env"
-        env_file_encoding = "utf-8"
+from db import DatabaseFacade
+from env import EnvConfig
 
 
 def create_rmq_channel(cfg: EnvConfig):
@@ -46,7 +29,7 @@ def main():
     rmq_channel.queue_bind("movies", "db", "movies")
 
     # SETUP MYSQL ENGINE
-    db_engine = init_db_engine(cfg)
+    db = DatabaseFacade(cfg)
 
 
 if __name__ == "__main__":
