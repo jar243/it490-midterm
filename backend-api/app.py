@@ -94,14 +94,14 @@ class MoviesApi:
         else:
             print(f"Error: {response.status_code} ")
         return[]
-"""
+
 search_movie = MoviesApi()
 #search_movie.search_movies("")
 
 trending = MoviesApi()
 all = trending.trending_shows()
-print(all)
-"""
+#print(all)
+
 popular = MoviesApi()
 pop = popular.popular_shows()
-print(pop)
+#print(pop)
