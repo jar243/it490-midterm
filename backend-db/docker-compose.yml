@@ -1,0 +1,29 @@
+version: "1.0.0"
+
+services:
+  rabbitmq:
+    image: rabbitmq:3.9.7-management
+    container_name: 'rabbitmq'
+    ports:
+        - 5672:5672
+        - 15672:15672
+    volumes:
+        - ~/.docker-conf/rabbitmq/data/:/var/lib/rabbitmq/
+        - ~/.docker-conf/rabbitmq/log/:/var/log/rabbitmq
+    networks:
+        - it490_rabbitmq_net
+  db:
+    image: mysql:8
+    container_name: 'mysql'
+    ports:
+        - 3306:3306
+    environment:
+      MYSQL_ROOT_PASSWORD: toor
+      MYSQL_DATABASE: appdb
+      MYSQL_USER: devuser
+      MYSQL_PASSWORD: devpassword
+
+
+networks:
+  it490_rabbitmq_net:
+    driver: bridge
