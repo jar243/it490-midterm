@@ -7,6 +7,7 @@ authors = ["Swapnil62 <sp2428@njit.edu>"]
 [tool.poetry.dependencies]
 python = "^3.9"
 requests = "2.20.0"
+tmdbsimple = "^2.8.0"
 
 [tool.poetry.dev-dependencies]
 

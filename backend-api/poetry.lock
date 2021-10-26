@@ -41,6 +41,17 @@ security = ["pyOpenSSL (>=0.14)", "cryptography (>=1.3.4)", "idna (>=2.0.0)"]
 socks = ["PySocks (>=1.5.6,!=1.5.7)", "win-inet-pton"]
 
 [[package]]
+name = "tmdbsimple"
+version = "2.8.0"
+description = "A Python wrapper for The Movie Database API v3"
+category = "main"
+optional = false
+python-versions = "*"
+
+[package.dependencies]
+requests = "*"
+
+[[package]]
 name = "urllib3"
 version = "1.24.3"
 description = "HTTP library with thread-safe connection pooling, file post, and more."
@@ -55,7 +66,7 @@ socks = ["PySocks (>=1.5.6,!=1.5.7,<2.0)"]
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.9"
-content-hash = "fe1dab5932597541c403a88ee73f88aefe8589f62450a54f381cbcd7fdddc838"
+content-hash = "8b783fd779dade58cf3ae38d66c84f0ced889f8c3ebd61320c9f58e09a3ec52a"
 
 [metadata.files]
 certifi = [
@@ -73,6 +84,10 @@ idna = [
 requests = [
     {file = "requests-2.20.0-py2.py3-none-any.whl", hash = "sha256:a84b8c9ab6239b578f22d1c21d51b696dcfe004032bb80ea832398d6909d7279"},
     {file = "requests-2.20.0.tar.gz", hash = "sha256:99dcfdaaeb17caf6e526f32b6a7b780461512ab3f1d992187801694cba42770c"},
+]
+tmdbsimple = [
+    {file = "tmdbsimple-2.8.0-py3-none-any.whl", hash = "sha256:c882112396634bc8d42689fdf347e4a230f6897e5c423fd4d3ab1411dcb4b98f"},
+    {file = "tmdbsimple-2.8.0.tar.gz", hash = "sha256:2f6f4b762e07e71e222b3200e3b83c4fce8ff61892402a60be925f79d49ab7fd"},
 ]
 urllib3 = [
     {file = "urllib3-1.24.3-py2.py3-none-any.whl", hash = "sha256:a637e5fae88995b256e3409dc4d52c2e2e0ba32c42a6365fee8bbd2238de3cfb"},
