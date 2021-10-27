@@ -20,11 +20,26 @@ PASSWORD_REGEX = r"^[\w\-&^/\\$#@!%*().,\"';:[\]{}]{5,30}$"
 # TABLE MODELS
 
 
+class Movie(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    title: str
+    year: int
+    genre: str
+
+
+class MovieRating(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    user_id: int = Field(foreign_key="user.id", primary_key=True)
+    movie_id: int = Field(foreign_key="movie.id", primary_key=True)
+    rating: int = Field(ge=1, le=5)
+    comment: str = Field(default="", max_length=1000)
+
+
 class User(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     email: EmailStr = Field(primary_key=True)
     username: str = Field(regex=USERNAME_REGEX, primary_key=True)
-    movie_ratings: list["MovieRating"] = Relationship()
+    movie_ratings: list[MovieRating] = Relationship()
     display_name: str = Field(regex=DISPLAY_NAME_REGEX)
     password_hash: bytes
     password_salt: bytes
@@ -40,21 +55,6 @@ class AuthToken(SQLModel, table=True):
     token: str = Field(default=None, primary_key=True)
     user_id: int = Field(foreign_key="user.id")
     expiration_date: datetime = datetime.utcnow() + timedelta(1)
-
-
-class Movie(SQLModel, table=True):
-    id: Optional[int] = Field(default=None, primary_key=True)
-    title: str
-    year: int
-    genre: str
-
-
-class MovieRating(SQLModel, table=True):
-    id: Optional[int] = Field(default=None, primary_key=True)
-    user_id: int = Field(foreign_key="user.id")
-    movie_id: int = Field(foreign_key="movie.id")
-    rating: int = Field(ge=1, le=5)
-    comment: str = Field(default="", max_length=1000)
 
 
 # CUSTOM EXCEPTION FOR USERS
