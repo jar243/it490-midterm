@@ -17,11 +17,13 @@ services:
     container_name: 'mysql'
     ports:
         - 3306:3306
+    volumes:
+        - ~/.docker-conf/mysql/log:/var/log/mysql
     environment:
-      MYSQL_ROOT_PASSWORD: toor
-      MYSQL_DATABASE: appdb
-      MYSQL_USER: devuser
-      MYSQL_PASSWORD: devpassword
+      MYSQL_ROOT_PASSWORD: 'toor'
+      MYSQL_DATABASE: 'appdb'
+      MYSQL_USER: 'devuser'
+      MYSQL_PASSWORD: 'devpassword'
 
 
 networks:

@@ -5,6 +5,7 @@ from datetime import datetime, timedelta
 from typing import Optional
 
 from pydantic import EmailStr
+from sqlalchemy.exc import IntegrityError
 from sqlmodel import Field, Relationship, Session, SQLModel, create_engine, select
 
 from env import EnvConfig
@@ -28,21 +29,22 @@ class Movie(SQLModel, table=True):
 
 
 class MovieRating(SQLModel, table=True):
-    id: Optional[int] = Field(default=None, primary_key=True)
     user_id: int = Field(foreign_key="user.id", primary_key=True)
     movie_id: int = Field(foreign_key="movie.id", primary_key=True)
     rating: int = Field(ge=1, le=5)
-    comment: str = Field(default="", max_length=1000)
+    comment: str = Field(default="", max_length=350)
 
 
 class User(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
-    email: EmailStr = Field(primary_key=True)
-    username: str = Field(regex=USERNAME_REGEX, primary_key=True)
+    username: str = Field(
+        regex=USERNAME_REGEX, index=True, sa_column_kwargs={"unique": True}
+    )
+    email: EmailStr = Field(sa_column_kwargs={"unique": True})
     movie_ratings: list[MovieRating] = Relationship()
     display_name: str = Field(regex=DISPLAY_NAME_REGEX)
-    password_hash: bytes
-    password_salt: bytes
+    password_hash: bytes = Field(index=False)
+    password_salt: bytes = Field(index=False)
 
     def check_password(self, password: str):
         test_hash = hashlib.pbkdf2_hmac(
@@ -81,16 +83,22 @@ class DatabaseFacade:
         pass_hash = hashlib.pbkdf2_hmac(
             "sha256", password.encode("utf-8"), pass_salt, 100000
         )
-        new_user = User(
-            email=EmailStr(email),
-            username=username,
-            display_name=display_name,
-            password_hash=pass_hash,
-            password_salt=pass_salt,
+        new_user = User.validate(
+            {
+                "username": username,
+                "email": email,
+                "display_name": display_name,
+                "password_hash": pass_hash,
+                "password_salt": pass_salt,
+            }
         )
         with Session(self._engine) as session:
             session.add(new_user)
-            session.commit()
+            try:
+                session.commit()
+            except IntegrityError as err:
+                if err.orig.args[0] == 1062:
+                    raise UserError("Username or email already in use")
 
     def generate_token(self, username: str, password: str):
         with Session(self._engine) as session:
