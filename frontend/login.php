@@ -6,11 +6,11 @@
                 $password = $_POST['password'];
 
                 if ( strpos( $email_username, '@' ) !== false ) {
-                        //--User entered an email, so we will check the email column on the db
+                        //--User entered an email
                         $_SESSION['email']=  $_POST['email_username'];
                 }
                 else{
-                        //--User entered an username, so we will check the username column on the db
+                        //--User entered an username
                         $_SESSION['username']=  $_POST['email_username'];
 
                }
@@ -68,7 +68,7 @@
                 </div>
                 <br>
 
-                Don't Have an account? <br><a href="registration.html">Signup Here</a><br>
+                Don't Have an account? <br><a href="registration.php">Signup Here</a><br>
                 <br>
 
             </form>
