@@ -1,3 +1,30 @@
+<?php
+        //--Check if form was posted to this file
+        if ( isset( $_POST['login'] ) ) {
+
+                $email_username = $_POST['email_username'];
+                $password = $_POST['password'];
+
+                if ( strpos( $email_username, '@' ) !== false ) {
+                        //--User entered an email, so we will check the email column on the db
+                        $_SESSION['email']=  $_POST['email_username'];
+                }
+                else{
+                        //--User entered an username, so we will check the username column on the db
+                        $_SESSION['username']=  $_POST['email_username'];
+
+               }
+
+                $response = login($email_username, $password);
+                if($response->status == 200){
+                        $_SESSION["user"] = $response->data;
+                        header("location: index.php");
+                }
+                else{
+                        var_export($response);
+                }
+}
+?>
 <!doctype html>
 <html lang="en">
 
