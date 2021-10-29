@@ -1,3 +1,44 @@
+<?php
+
+ if(isset($_GET['msg']))
+    {
+        $Message = "Account removed";
+        echo $Message;
+    }
+
+?>
+
+<?php
+    //--Check if form was posted to this file
+    if ( isset( $_POST['signup'] ) ) {
+      
+      $username = $_POST['username'];
+      $email = $_POST['email'];
+      $password = $_POST['password'];
+      $password2 = $_POST['password2'];
+
+	$_SESSION['username'] = $_POST['username'];
+	//$_SESSION['email'] = $_POST['email'];      
+
+      if ( $password == $password2 ) {
+
+      //calls functions 
+	$response = signup($email, $username, $password, $password2);
+          if($response->status == 200){
+		$_SESSION["user"] = $response->data;
+		header ("refresh: 1 ; url = index.php");
+	  }
+          else{
+            var_export($response);
+          }
+      }
+	else
+		echo "Passwords must be the same.";
+    }
+
+
+?>
+
 <!doctype html>
 <html lang="en">
 
