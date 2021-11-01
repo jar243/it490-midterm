@@ -3,8 +3,6 @@ import json
 import pprint
 from pydantic import BaseSettings
 
-
-
 class EnvConfig(BaseSettings):
     tmdb_api_key: str
 
@@ -17,12 +15,13 @@ class EnvConfig(BaseSettings):
 class MoviesApi:
     def __init__(self, api_key:str):
         self._api_key = api_key
-        self._base_url = 'https://api.themoviedb.org'
+        self._host_url = 'https://api.themoviedb.org'
+        self._image_url = 'https://image.tmdb.org/t/p/w500/'
 
     def search_movies(self, search_str: str):
         # logic here
         search_str = input("Search Movie: ")
-        api_search = f"{self._base_url}/3/search/movie?api_key={self._api_key}"
+        api_search = f"{self._host_url}/3/search/movie?api_key={self._api_key}"
         params = {'query':search_str}
 
         response = requests.get(api_search, params)
@@ -33,7 +32,11 @@ class MoviesApi:
             for i in data['results']:
                 print('Title: ' + i['title'] +'\n')
                 print('Overview: ' + i['overview']+'\n')
-                print(i['backdrop_path'])
+                poster_path = (i['backdrop_path'])
+                if poster_path != None:
+                    print(f"{self._image_url}{poster_path}")
+                else:
+                    print("Sorry, poster not available")
 
         else:
             print(f" Error: {response.status_code} ")
@@ -41,7 +44,7 @@ class MoviesApi:
 
     def trending_movies(self):
 
-        movies_trending = "https://api.themoviedb.org/3/trending/movie/week?api_key=" + self._api_key
+        movies_trending = f"{self._host_url}/3/trending/movie/week?api_key=" + self._api_key
         response = requests.get(movies_trending)
 
         if response.status_code == 200:
@@ -50,7 +53,11 @@ class MoviesApi:
             for i in data['results']:
                 print('Title: ' + i['title'] + '\n')
                 print('Overview: ' + i['overview']+'\n')
-                print(i['backdrop_path'])
+                poster_path = (i['backdrop_path'])
+                if poster_path != None:
+                    print(f"{self._image_url}{poster_path}")
+                else:
+                    print("Sorry, poster not available")
 
         else:
             print(f"Error: {response.status_code} ")
@@ -58,7 +65,7 @@ class MoviesApi:
 
     def trending_shows(self):
     
-        shows_trending = "https://api.themoviedb.org/3/trending/tv/week?api_key=" + self._api_key
+        shows_trending = f"{self._host_url}/3/trending/tv/week?api_key=" + self._api_key
         response = requests.get(shows_trending)
 
         if response.status_code == 200:
@@ -67,14 +74,18 @@ class MoviesApi:
             for i in data['results']:
                 print('Name: ' + i['name'] + '\n')
                 print('Overview: ' + i['overview']+'\n')
-                print(i['backdrop_path'])
+                poster_path = (i['backdrop_path'])
+                if poster_path != None:
+                    print(f"{self._image_url}{poster_path}")
+                else:
+                    print("Sorry, poster not available")
 
         else:
             print(f"Error: {response.status_code} ")
         return[]
 
     def popular_movies(self):
-        popular = "https://api.themoviedb.org/3/movie/popular?api_key=" + self._api_key
+        popular = f"{self._host_url}/3/movie/popular?api_key=" + self._api_key
         response = requests.get(popular)
 
         if response.status_code == 200:
@@ -83,14 +94,18 @@ class MoviesApi:
             for i in data['results']:
                 print('Title: ' + i['title'] + '\n')
                 print('Overview: ' + i['overview']+'\n')
-                print(i['backdrop_path'])
+                poster_path = (i['backdrop_path'])
+                if poster_path != None:
+                    print(f"{self._image_url}{poster_path}")
+                else:
+                    print("Sorry, poster not available")
 
         else:
             print(f"Error: {response.status_code} ")
         return[]
 
     def popular_shows(self):
-        popular = "https://api.themoviedb.org/3/tv/popular?api_key=" + self._api_key
+        popular = f"{self._host_url}/3/tv/popular?api_key=" + self._api_key
         response = requests.get(popular)
 
         if response.status_code == 200:
@@ -99,8 +114,11 @@ class MoviesApi:
             for i in data['results']:
                 print('Name: ' + i['name'] + '\n')
                 print('Overview: ' + i['overview']+'\n')
-                print(i['backdrop_path'])
-
+                poster_path = (i['backdrop_path'])
+                if poster_path != None:
+                    print(f"{self._image_url}{poster_path}")
+                else:
+                    print("Sorry, poster not available")
         else:
             print(f"Error: {response.status_code} ")
         return[]
