@@ -1,3 +1,30 @@
+<?php
+        //--Check if form was posted to this file
+        if ( isset( $_POST['login'] ) ) {
+
+                $email_username = $_POST['email_username'];
+                $password = $_POST['password'];
+
+                if ( strpos( $email_username, '@' ) !== false ) {
+                        //--User entered an email
+                        $_SESSION['email']=  $_POST['email_username'];
+                }
+                else{
+                        //--User entered an username
+                        $_SESSION['username']=  $_POST['email_username'];
+
+               }
+
+                $response = login($email_username, $password);
+                if($response->status == 200){
+                        $_SESSION["user"] = $response->data;
+                        header("location: index.php");
+                }
+                else{
+                        var_export($response);
+                }
+}
+?>
 <!doctype html>
 <html lang="en">
 
@@ -41,7 +68,7 @@
                 </div>
                 <br>
 
-                Don't Have an account? <br><a href="registration.html">Signup Here</a><br>
+                Don't Have an account? <br><a href="registration.php">Signup Here</a><br>
                 <br>
 
             </form>
