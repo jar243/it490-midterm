@@ -8,6 +8,7 @@ authors = ["Swapnil62 <sp2428@njit.edu>"]
 python = "^3.9"
 requests = "2.20.0"
 tmdbsimple = "^2.8.0"
+pydantic = {extras = ["dotenv"], version = "^1.8.2"}
 
 [tool.poetry.dev-dependencies]
 
