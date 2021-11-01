@@ -1,6 +1,5 @@
 import pika
 
-
 SERVER_QUEUE = "rpc.server.queue"
 
 
@@ -14,7 +13,7 @@ def main():
 
     """
     pika.ConnectionParameters(
-        host='127.0.0.1', credentials=pika.PlainCredentials('guest', 'guest')
+        host="127.0.0.1", credentials=pika.PlainCredentials("guest", "guest")
     )
 
     with pika.BlockingConnection() as conn:
@@ -68,5 +67,6 @@ def on_client_rx_reply_from_server(ch, method_frame, properties, body):
     # to force control to return from channel.start_consuming()
     print("RPC Client says bye")
     ch.close()
+
 
 main()

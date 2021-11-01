@@ -139,8 +139,8 @@ class DatabaseFacade:
             session.delete(token)
             session.commit()
 
-    def get_user_by_id(self, user_id: int):
+    def get_user(self, username: str):
         # can cause NoResultFound exception
         with Session(self._engine) as session:
-            statement = select(User).where(User.id == user_id)
+            statement = select(User).where(User.username == username)
             return session.exec(statement).one()

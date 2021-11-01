@@ -14,7 +14,7 @@ class RabbitFacade:
         # STEP 2: SETUP LOG EXCHANGE
         self._channel.exchange_declare("log", exchange_type=ExchangeType.fanout)
         res = self._channel.queue_declare("", auto_delete=True)
-        self._log_channel = res.method.queue  # auto-generated queue name
+        self._log_channel: str = res.method.queue  # auto-generated queue name
         self._channel.queue_bind(self._log_channel, "log", "xxx")
 
         # STEP 3: SETUP DB EXCHANGE
