@@ -44,7 +44,7 @@ class RabbitClient
         $connection = $this->open_connection();
         $channel = $connection->channel();
 
-        $response = null;
+        $response = 'NO_RESPONSE_YET';
         $channel->basic_consume(
             $RES_QUEUE,
             '',
@@ -53,7 +53,7 @@ class RabbitClient
             false,
             false,
             function (AMQPMessage $message) use (&$response) {
-                $response = json_decode($message->body);
+                $response = $message->body;
             },
         );
 
@@ -67,23 +67,14 @@ class RabbitClient
         );
 
         $channel->basic_publish($msg, '', $route);
-        while (is_null($response)) {
+        while ($response == 'NO_RESPONSE_YET') {
             $channel->wait();
         }
 
         $channel->close();
         $connection->close();
 
-        return $response;
-    }
-
-    public function login(string $username, string $password)
-    {
-        $res = $this->publish_with_res(
-            'db.auth.login',
-            ['username' => $username, 'password' => $password]
-        );
-        return $res;
+        return json_decode($response);
     }
 
     public function log(string $log_msg)
@@ -103,5 +94,35 @@ class RabbitClient
 
         $channel->close();
         $connection->close();
+    }
+
+    public function user_create(string $username, string $display_name, string $email, string $password)
+    {
+        $this->publish(
+            'db.user.create',
+            [
+                'username' => $username,
+                'display_name' => $display_name,
+                'email' => $email,
+                'password' => $password
+            ]
+        );
+    }
+
+    public function token_generate(string $username, string $password)
+    {
+        $res = $this->publish_with_res(
+            'db.token.generate',
+            ['username' => $username, 'password' => $password]
+        );
+        return $res;
+    }
+
+    public function token_delete(string $token)
+    {
+        $this->publish(
+            'db.token.delete',
+            ['token' => $token]
+        );
     }
 }
