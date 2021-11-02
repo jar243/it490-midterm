@@ -79,10 +79,11 @@ class RabbitClient
 
     public function login(string $username, string $password)
     {
-        $this->publish(
+        $res = $this->publish_with_res(
             'db.auth.login',
             ['username' => $username, 'password' => $password]
         );
+        return $res;
     }
 
     public function log(string $log_msg)
