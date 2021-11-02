@@ -1,6 +1,6 @@
 <?php
 
-require_once __DIR__ . '/vendor/autoload.php';
+require_once(__DIR__ . '../../../vendor/autoload.php');
 
 use PhpAmqpLib\Connection\AMQPStreamConnection;
 use PhpAmqpLib\Message\AMQPMessage;
@@ -26,18 +26,6 @@ class RabbitClient
     }
 
     private function publish(string $route, array $args)
-    {
-        $connection = $this->open_connection();
-        $channel = $connection->channel();
-        $channel->queue_declare($route, true);
-
-        $json_body = json_encode($args);
-        $msg = new AMQPMessage($json_body);
-
-        $channel->basic_publish($msg, '', $route);
-    }
-
-    private function publish_with_res(string $route, array $args)
     {
         $RES_QUEUE = 'amq.rabbitmq.reply-to';
 
@@ -111,7 +99,7 @@ class RabbitClient
 
     public function token_generate(string $username, string $password)
     {
-        $res = $this->publish_with_res(
+        $res = $this->publish(
             'db.token.generate',
             ['username' => $username, 'password' => $password]
         );
