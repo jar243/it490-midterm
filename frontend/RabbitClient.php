@@ -29,7 +29,7 @@ class RabbitClient
     {
         $connection = $this->open_connection();
         $channel = $connection->channel();
-        $channel->queue_declare($route);
+        $channel->queue_declare($route, true);
 
         $json_body = json_encode($args);
         $msg = new AMQPMessage($json_body);
@@ -79,6 +79,10 @@ class RabbitClient
 
     public function login(string $username, string $password)
     {
+        $this->publish(
+            'db.auth.login',
+            ['username' => $username, 'password' => $password]
+        );
     }
 
     public function log(string $log_msg)
