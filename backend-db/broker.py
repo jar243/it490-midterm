@@ -1,12 +1,12 @@
+import json
 from datetime import datetime
-from typing import Callable, Union
 from pathlib import Path
+from typing import Callable, Union
 
 import pika
 from pika.channel import Channel
 from pika.exchange_type import ExchangeType
-
-import json
+from pydantic import ValidationError
 
 # GLOBAL VARIABLES
 
@@ -38,7 +38,6 @@ def reply_ok(channel: Channel, reply_queue: str, reply: Union[dict, None]):
 
 def reply_err(channel: Channel, reply_queue: str, err_msg: str):
     reply = {"is_error": True, "msg": err_msg}
-    print("replied with an err")
     publish(channel, reply_queue, reply)
 
 
@@ -68,7 +67,11 @@ def wrap_handler(handler: HandlerCallable):
                 reply_ok(channel, reply_queue, handler_reply)
         except Exception as exc:
             if needs_reply:
-                err_msg = str(exc) if isinstance(exc, UserError) else "Server Error"
+                err_msg = (
+                    str(exc)
+                    if isinstance(exc, (UserError, ValidationError))
+                    else "Server Error"
+                )
                 reply_err(channel, reply_queue, err_msg)
             publish_log(channel, str(exc))
 

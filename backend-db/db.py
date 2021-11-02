@@ -8,8 +8,8 @@ from pydantic import EmailStr
 from sqlalchemy.exc import IntegrityError
 from sqlmodel import Field, Relationship, Session, SQLModel, create_engine, select
 
-from env import EnvConfig
 from broker import UserError
+from env import EnvConfig
 
 # CONSTANTS
 

@@ -1,9 +1,7 @@
 import warnings
 
-from sqlalchemy.exc import SAWarning
-
-
 from pydantic import BaseModel
+from sqlalchemy.exc import SAWarning
 
 from broker import run_rabbit_app
 from db import DatabaseFacade
