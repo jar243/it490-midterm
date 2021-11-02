@@ -9,6 +9,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlmodel import Field, Relationship, Session, SQLModel, create_engine, select
 
 from env import EnvConfig
+from broker import UserError
 
 # CONSTANTS
 
@@ -57,13 +58,6 @@ class AuthToken(SQLModel, table=True):
     token: str = Field(default=None, primary_key=True)
     user_id: int = Field(foreign_key="user.id")
     expiration_date: datetime = datetime.utcnow() + timedelta(1)
-
-
-# CUSTOM EXCEPTION FOR USERS
-
-
-class UserError(Exception):
-    pass
 
 
 # FACADE CLASS
