@@ -161,10 +161,18 @@ def main():
     trending_movies = {
         'api.trending.movies' : handle_trending_movies
     }
-
+    trending_shows = {
+        'api.trending.shows' : handle_trending_shows
+    }
+    popular_movies = {
+        'api.popular.movies' : handle_popular_movies
+    }
+    popular_shows = {
+        'api.popular.shows' : handle_popular_shows
+    }
     global api
     config = EnvConfig()
     api = MoviesApi(config.tmdb_api_key)
 
-    run_rabbit_app('backend-api', '127.0.0.1', 5672, 'guest', 'guest', search_routes,trending_movies)
+    run_rabbit_app('backend-api', '127.0.0.1', 5672, 'guest', 'guest', search_routes,trending_movies,trending_shows,popular_shows,popular_movies)
 
