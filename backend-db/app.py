@@ -24,15 +24,26 @@ def handle_token_gen(req_body: dict):
     return {"token": token}
 
 
-# token.delete
+# token.get-user
 
 
-class TokenDeleteBody(BaseModel):
+class TokenBody(BaseModel):
     token: str
 
 
+def handle_token_get_user(req_body: dict):
+    rq = TokenBody(**req_body)
+    user = db.get_token_user(rq.token)
+    if user is None:
+        return None
+    return user.dict(include={"username": ..., "display_name": ...})
+
+
+# token.delete
+
+
 def handle_token_delete(req_body: dict):
-    rq = TokenDeleteBody(**req_body)
+    rq = TokenBody(**req_body)
     db.delete_token(rq.token)
 
 
@@ -59,6 +70,7 @@ def main():
 
     route_handlers = {
         "db.token.generate": handle_token_gen,
+        "db.token.get-user": handle_token_get_user,
         "db.token.delete": handle_token_delete,
         "db.user.create": handle_user_create,
     }

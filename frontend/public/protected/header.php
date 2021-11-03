@@ -1,3 +1,18 @@
+<?php
+ob_start();
+require('protected/RabbitClient.php');
+$rc = new RabbitClient('127.0.0.1', 5672, 'guest', 'guest');
+$token = isset($_COOKIE['token']) ? $_COOKIE['token'] : null;
+$active_user = null;
+if (!is_null($token)) {
+  $active_user = $rc->token_get_user($token);
+  if (is_null($active_user)) {
+    $token = null;
+    setcookie('token', 'null', 1);
+  }
+}
+?>
+
 <!doctype html>
 <html lang="en">
 
@@ -8,7 +23,7 @@
   <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
 </head>
 
-<body class="bg-secondary p-2">
+<body class="bg-secondary">
 
   <nav class="navbar navbar-dark bg-dark navbar-expand-lg mb-3">
 

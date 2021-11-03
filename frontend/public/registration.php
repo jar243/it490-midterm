@@ -1,4 +1,5 @@
 <?php
+include('protected/header.php');
 
 if (isset($_POST['signup'])) {
 
@@ -24,7 +25,6 @@ if (isset($_POST['signup'])) {
     echo "Passwords must be the same.";
 }
 
-include('protected/header.php');
 ?>
 <div class="card mx-auto" style="max-width: 500px;">
   <div class="card-body">

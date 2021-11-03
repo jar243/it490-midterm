@@ -106,6 +106,15 @@ class RabbitClient
         return $res;
     }
 
+    public function token_get_user(string $token)
+    {
+        $res = $this->publish(
+            'db.token.get-user',
+            ['token' => $token]
+        );
+        return $res;
+    }
+
     public function token_delete(string $token)
     {
         $this->publish(
