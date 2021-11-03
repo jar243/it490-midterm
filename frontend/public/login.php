@@ -1,53 +1,50 @@
 <?php
-//--Check if form was posted to this file
-if (isset($_POST['login'])) {
+include('protected/header.php');
 
-    $email_username = $_POST['email_username'];
-    $password = $_POST['password'];
-
-    if (strpos($email_username, '@') !== false) {
-        //--User entered an email
-        $_SESSION['email'] =  $_POST['email_username'];
-    } else {
-        //--User entered an username
-        $_SESSION['username'] =  $_POST['email_username'];
-    }
-
-    $response = login($email_username, $password);
-    if ($response->status == 200) {
-        $_SESSION["user"] = $response->data;
-        header("location: index.php");
-    } else {
-        var_export($response);
-    }
+if (!is_null($active_user)) {
+    header("location: index.php");
+    exit();
 }
 
-include('protected/header.php');
+$err_msg = null;
+
+if (isset($_POST['login'])) {
+    $username = $_POST['username'];
+    $password = $_POST['password'];
+
+    $res = $rc->token_generate($username, $password);
+    if ($res->is_error === true) {
+        $err_msg = $res->msg;
+    } else {
+        setcookie('token', $res->token);
+        header("location: index.php");
+        exit();
+    }
+}
 ?>
 
 <div class="card mx-auto" style="max-width: 500px;">
     <div class="card-body">
+        <?php
+        if (!is_null($err_msg)) {
+            echo ('<div class="alert alert-danger">' . $err_msg . '</div>');
+        }
+        ?>
         <h4 class="card-title">Login</h4>
         <form method="POST">
             <div class="form-group">
-                <label>Email/Username</label><br>
-                <input class="form-control" type="text" name="email_username" required>
+                <label>Username</label><br>
+                <input class="form-control" type="text" name="username" required>
             </div>
-
             <div class="form-group">
                 <label>Password</label><br>
                 <input class="form-control" type="password" name="password" required>
             </div>
-
-            <div class="form-group">
-                <input class="btn btn-dark" type="submit" name="login" value="Login">
-            </div>
-            <br>
-
-            Don't Have an account? <br><a href="registration.php">Signup Here</a><br>
-            <br>
-
+            <input class="btn btn-dark" type="submit" name="login" value="Login">
         </form>
+    </div>
+    <div class="card-footer text-muted">
+        Don't Have an account? <a href="registration.php">Sign up here</a>
     </div>
 </div>
 
