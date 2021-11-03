@@ -2,27 +2,23 @@
 include('protected/header.php');
 
 if (isset($_POST['signup'])) {
-
+  
   $username = $_POST['username'];
   $email = $_POST['email'];
   $password = $_POST['password'];
   $password2 = $_POST['password2'];
 
   $_SESSION['username'] = $_POST['username'];
-  //$_SESSION['email'] = $_POST['email'];      
-
+  
   if ($password == $password2) {
-
-
-    $response = signup($email, $username, $password, $password2);
-    if ($response->status == 300) {
-      $_SESSION["user"] = $response->data;
-      header("refresh: 1 ; url = index.php");
-    } else {
-      var_export($response);
+     $res = $rc->token_generate($email, $username, $password, $password2);
+     if ($res->is_error === true) {
+        $err_msg = $res->msg;
+      }else {
+        setcookie('token', $res->token);
+        header("location: index.php");
+        exit();
     }
-  } else
-    echo "Passwords must be the same.";
 }
 
 ?>
