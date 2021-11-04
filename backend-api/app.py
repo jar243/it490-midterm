@@ -1,7 +1,8 @@
 import requests
 import json
-import pprint
+
 from pydantic import BaseSettings
+from broker import run_rabbit_app
 
 class EnvConfig(BaseSettings):
     tmdb_api_key: str
@@ -9,8 +10,6 @@ class EnvConfig(BaseSettings):
     class Config:
         env_file = '.env'
         env_file_encoding = 'utf-8'
-
-
 
 class MoviesApi:
     def __init__(self, api_key:str):
@@ -61,6 +60,8 @@ class MoviesApi:
 
         else:
             print(f"Error: {response.status_code} ")
+
+        
         return[]
 
     def trending_shows(self):
@@ -124,13 +125,54 @@ class MoviesApi:
         return[]
 
 
-config = EnvConfig()
-api = MoviesApi(config.tmdb_api_key)
+api: MoviesApi
 
-#search_movie.search_movies("")
+def handle_movies_search(req_body: dict):
+    query = req_body.get('query')
+    if query is None or not isinstance(query, str) or len(query) == 0:
+        raise RuntimeError('Invalid query supplied')
 
-trending = api.trending_shows()
-print(trending)
+    results = []
 
-popular = api.popular_shows()
-print(popular)
+    return {'results': results}
+
+def handle_trending_movies(req_body: dict):
+    results = []
+    return {'results': results}
+
+def handle_trending_shows(req_body: dict):
+    results = []
+    return {'results': results}
+
+def handle_popular_movies(req_body: dict):
+    results = []
+    return {'results' : results}
+
+def handle_popular_shows(req_body: dict):
+    results = []
+    return {'results' : results}
+
+def main():
+
+    search_routes = {
+        'api.movies.search': handle_movies_search     
+    }
+
+    trending_movies = {
+        'api.trending.movies' : handle_trending_movies
+    }
+    trending_shows = {
+        'api.trending.shows' : handle_trending_shows
+    }
+    popular_movies = {
+        'api.popular.movies' : handle_popular_movies
+    }
+    popular_shows = {
+        'api.popular.shows' : handle_popular_shows
+    }
+    global api
+    config = EnvConfig()
+    api = MoviesApi(config.tmdb_api_key)
+
+    run_rabbit_app('backend-api', '127.0.0.1', 5672, 'guest', 'guest', search_routes,trending_movies,trending_shows,popular_shows,popular_movies)
+
