@@ -38,13 +38,22 @@ if (!is_null($token)) {
         <li class="nav-item">
           <a class="nav-link" href=".">Home</a>
         </li>
-        <li class="nav-item">
-          <a class="nav-link" href="./login.php">Login</a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link" href="./registration.php">Registration</a>
-        </li>
       </ul>
+      <div class="btn-group navbar-nav ml-auto">
+        <?php
+        if (is_null($active_user)) {
+          echo ('
+                <a class="btn btn-primary" href="./login.php">Login</a>
+                <a class="btn btn-success" href="./registration.php">Register</a>
+            ');
+        } else {
+          echo ('
+                <a class="btn btn-primary" href="./my-profile.php">' . $active_user->display_name . '</a>
+                <a class="btn btn-success" href="./logout.php">Logout</a>
+            ');
+        }
+        ?>
+      </div>
     </div>
 
   </nav>

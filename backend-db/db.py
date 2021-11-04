@@ -11,14 +11,6 @@ from sqlmodel import Field, Relationship, Session, SQLModel, create_engine, sele
 from broker import UserError
 from env import EnvConfig
 
-# CONSTANTS
-
-
-USERNAME_REGEX = r"^[\w\-]{3,}$"
-DISPLAY_NAME_REGEX = r"^[\w\-' ]{3,}$"
-PASSWORD_REGEX = r"^[\w\-&^/\\$#@!%*().,\"';:[\]{}]{5,30}$"
-
-
 # TABLE MODELS
 
 
@@ -38,12 +30,12 @@ class MovieRating(SQLModel, table=True):
 
 class User(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
-    username: str = Field(
-        regex=USERNAME_REGEX, index=True, sa_column_kwargs={"unique": True}
-    )
-    email: EmailStr = Field(sa_column_kwargs={"unique": True})
+    username: str = Field(index=True, sa_column_kwargs={"unique": True})
+    display_name: str
     movie_ratings: list[MovieRating] = Relationship()
-    display_name: str = Field(regex=DISPLAY_NAME_REGEX)
+    bio: str = Field(default="")
+
+    email: EmailStr = Field(sa_column_kwargs={"unique": True})
     password_hash: bytes = Field(index=False)
     password_salt: bytes = Field(index=False)
 
@@ -70,30 +62,6 @@ class DatabaseFacade:
         )
         SQLModel.metadata.create_all(self._engine)
 
-    def create_user(self, email: str, username: str, display_name: str, password: str):
-        if not re.match(PASSWORD_REGEX, password):
-            raise UserError("Invalid password")
-        pass_salt = secrets.token_bytes(32)
-        pass_hash = hashlib.pbkdf2_hmac(
-            "sha256", password.encode("utf-8"), pass_salt, 100000
-        )
-        new_user = User.validate(
-            {
-                "username": username,
-                "email": email,
-                "display_name": display_name,
-                "password_hash": pass_hash,
-                "password_salt": pass_salt,
-            }
-        )
-        with Session(self._engine) as session:
-            session.add(new_user)
-            try:
-                session.commit()
-            except IntegrityError as err:
-                if err.orig.args[0] == 1062:
-                    raise UserError("Username or email already in use")
-
     def generate_token(self, username: str, password: str):
         with Session(self._engine) as session:
             statement = select(User).where(User.username == username)
@@ -116,12 +84,12 @@ class DatabaseFacade:
             statement = select(AuthToken, User).where(AuthToken.token == token_str)
             result = session.exec(statement).first()
             if result is None:
-                return None
+                raise UserError("Invalid token")
             token, user = result
             if datetime.utcnow() > token.expiration_date:
                 session.delete(token)
                 session.commit()
-                return None
+                raise UserError("Invalid token")
         return user
 
     def delete_token(self, token_str: str):
@@ -133,8 +101,37 @@ class DatabaseFacade:
             session.delete(token)
             session.commit()
 
+    def create_user(
+        self, email: EmailStr, username: str, display_name: str, password: str
+    ):
+        pass_salt = secrets.token_bytes(32)
+        pass_hash = hashlib.pbkdf2_hmac(
+            "sha256", password.encode("utf-8"), pass_salt, 100000
+        )
+        new_user = User(
+            username=username,
+            email=email,
+            display_name=display_name,
+            password_hash=pass_hash,
+            password_salt=pass_salt,
+        )
+        with Session(self._engine) as session:
+            session.add(new_user)
+            try:
+                session.commit()
+            except IntegrityError as err:
+                if err.orig.args[0] == 1062:
+                    raise UserError("Username or email already in use")
+
     def get_user(self, username: str):
-        # can cause NoResultFound exception
         with Session(self._engine) as session:
             statement = select(User).where(User.username == username)
-            return session.exec(statement).one()
+            user = session.exec(statement).first()
+            if user is None:
+                raise UserError(f"Username {username} does not exist")
+            return user
+
+    def update_user(self, user: User):
+        with Session(self._engine) as session:
+            session.add(user)
+            session.commit()

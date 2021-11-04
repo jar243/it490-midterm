@@ -49,9 +49,7 @@ class RabbitClient
 
         $msg = new AMQPMessage(
             $json_body,
-            [
-                'reply_to' => $RES_QUEUE
-            ],
+            ['reply_to' => $RES_QUEUE],
         );
 
         $channel->basic_publish($msg, '', $route);
@@ -86,7 +84,7 @@ class RabbitClient
 
     public function user_create(string $username, string $display_name, string $email, string $password)
     {
-        $this->publish(
+        return $this->publish(
             'db.user.create',
             [
                 'username' => $username,
@@ -97,27 +95,53 @@ class RabbitClient
         );
     }
 
+    public function user_get_public(string $username)
+    {
+        return $this->publish(
+            'db.user.get.public',
+            ['username' => $username]
+        );
+    }
+
+    public function user_get_private(string $token)
+    {
+        return $this->publish(
+            'db.user.get.private',
+            ['token' => $token]
+        );
+    }
+
+    public function user_update(string $token, string $display_name, string $bio)
+    {
+        return $this->publish(
+            'db.user.update',
+            [
+                'token' => $token,
+                'display_name' => $display_name,
+                'bio' => $bio
+            ]
+        );
+    }
+
     public function token_generate(string $username, string $password)
     {
-        $res = $this->publish(
+        return $this->publish(
             'db.token.generate',
             ['username' => $username, 'password' => $password]
         );
-        return $res;
     }
 
     public function token_get_user(string $token)
     {
-        $res = $this->publish(
+        return $this->publish(
             'db.token.get-user',
             ['token' => $token]
         );
-        return $res;
     }
 
     public function token_delete(string $token)
     {
-        $this->publish(
+        return $this->publish(
             'db.token.delete',
             ['token' => $token]
         );

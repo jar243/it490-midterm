@@ -10,10 +10,10 @@ from pydantic import ValidationError
 
 # GLOBAL VARIABLES
 
-LOG_FILE = Path(".log")
+LOG_FILE = Path(__file__).parent.joinpath(".log")
 LOGS_EXCHANGE = "logs"
+LOG_NAME: str
 channel: Channel
-log_name: str
 
 
 class UserError(Exception):
@@ -43,7 +43,7 @@ def reply_err(channel: Channel, reply_queue: str, err_msg: str):
 
 def publish_log(channel: Channel, log_msg: str):
     log_body = {
-        "sender": log_name,
+        "sender": LOG_NAME,
         "time": datetime.utcnow().isoformat(),
         "msg": log_msg,
     }
@@ -89,7 +89,7 @@ def declare_queue(channel: Channel, queue_name: str, handler: Callable):
 
 def declare_log_exchange(channel: Channel):
     def handle_log(rq: dict):
-        log_str = " | ".join([rq["sender"], rq["time"], rq["msg"]]) + "\n"
+        log_str = f'{rq["sender"]} | {rq["time"]}\n{rq["msg"]}\n{"- "*39}-\n'
         with open(LOG_FILE, "a") as fl:
             fl.write(log_str)
 
@@ -108,7 +108,7 @@ def declare_log_exchange(channel: Channel):
 
 
 def generate_connect_callback(route_handlers: dict[str, Callable]):
-    def on_channel_open(new_channel):
+    def on_channel_open(new_channel: Channel):
         global channel
         channel = new_channel
         declare_log_exchange(channel)
@@ -132,8 +132,8 @@ def run_rabbit_app(
     password: str,
     route_handlers: dict[str, Callable],
 ):
-    global log_name
-    log_name = device_name
+    global LOG_NAME
+    LOG_NAME = device_name
 
     conn_params = pika.ConnectionParameters(
         host=host, port=port, credentials=pika.PlainCredentials(username, password)
