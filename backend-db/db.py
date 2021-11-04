@@ -38,12 +38,12 @@ class MovieRating(SQLModel, table=True):
 
 class User(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
-    username: str = Field(
-        regex=USERNAME_REGEX, index=True, sa_column_kwargs={"unique": True}
-    )
-    email: EmailStr = Field(sa_column_kwargs={"unique": True})
+    username: str = Field(index=True, sa_column_kwargs={"unique": True})
+    display_name: str
     movie_ratings: list[MovieRating] = Relationship()
-    display_name: str = Field(regex=DISPLAY_NAME_REGEX)
+    bio: str = Field(default="")
+
+    email: EmailStr = Field(sa_column_kwargs={"unique": True})
     password_hash: bytes = Field(index=False)
     password_salt: bytes = Field(index=False)
 
@@ -70,6 +70,45 @@ class DatabaseFacade:
         )
         SQLModel.metadata.create_all(self._engine)
 
+    def generate_token(self, username: str, password: str):
+        with Session(self._engine) as session:
+            statement = select(User).where(User.username == username)
+            results = session.exec(statement)
+            target_user = results.first()
+            if target_user is None:
+                raise UserError("Username does not exist")
+            if target_user.check_password(password) is False:
+                raise UserError("Incorrect password")
+            token_str = secrets.token_urlsafe(32)
+            if not isinstance(target_user.id, int):
+                raise RuntimeError("User was never assigned ID")
+            new_token = AuthToken(token=token_str, user_id=target_user.id)
+            session.add(new_token)
+            session.commit()
+        return token_str
+
+    def get_token_user(self, token_str: str):
+        with Session(self._engine) as session:
+            statement = select(AuthToken, User).where(AuthToken.token == token_str)
+            result = session.exec(statement).first()
+            if result is None:
+                raise UserError("Invalid token")
+            token, user = result
+            if datetime.utcnow() > token.expiration_date:
+                session.delete(token)
+                session.commit()
+                raise UserError("Invalid token")
+        return user
+
+    def delete_token(self, token_str: str):
+        with Session(self._engine) as session:
+            statement = select(AuthToken).where(AuthToken.token == token_str)
+            token = session.exec(statement).first()
+            if token is None:
+                return
+            session.delete(token)
+            session.commit()
+
     def create_user(self, email: str, username: str, display_name: str, password: str):
         if not re.match(PASSWORD_REGEX, password):
             raise UserError("Invalid password")
@@ -94,47 +133,12 @@ class DatabaseFacade:
                 if err.orig.args[0] == 1062:
                     raise UserError("Username or email already in use")
 
-    def generate_token(self, username: str, password: str):
-        with Session(self._engine) as session:
-            statement = select(User).where(User.username == username)
-            results = session.exec(statement)
-            target_user = results.first()
-            if target_user is None:
-                raise UserError("Username does not exist")
-            if target_user.check_password(password) is False:
-                raise UserError("Incorrect password")
-            token_str = secrets.token_urlsafe(32)
-            if not isinstance(target_user.id, int):
-                raise RuntimeError("User was never assigned ID")
-            new_token = AuthToken(token=token_str, user_id=target_user.id)
-            session.add(new_token)
-            session.commit()
-        return token_str
-
-    def get_token_user(self, token_str: str):
-        with Session(self._engine) as session:
-            statement = select(AuthToken, User).where(AuthToken.token == token_str)
-            result = session.exec(statement).first()
-            if result is None:
-                return None
-            token, user = result
-            if datetime.utcnow() > token.expiration_date:
-                session.delete(token)
-                session.commit()
-                return None
-        return user
-
-    def delete_token(self, token_str: str):
-        with Session(self._engine) as session:
-            statement = select(AuthToken).where(AuthToken.token == token_str)
-            token = session.exec(statement).first()
-            if token is None:
-                return
-            session.delete(token)
-            session.commit()
-
     def get_user(self, username: str):
-        # can cause NoResultFound exception
         with Session(self._engine) as session:
             statement = select(User).where(User.username == username)
-            return session.exec(statement).one()
+            return session.exec(statement).first()
+
+    def update_user(self, user: User):
+        with Session(self._engine) as session:
+            session.add(user)
+            session.commit()
