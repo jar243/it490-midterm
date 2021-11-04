@@ -1,9 +1,9 @@
 import warnings
 
-from pydantic import BaseModel, Field, EmailStr
+from pydantic import BaseModel, EmailStr, Field
 from sqlalchemy.exc import SAWarning
 
-from broker import run_rabbit_app, UserError
+from broker import run_rabbit_app
 from db import DatabaseFacade
 from env import EnvConfig
 
@@ -84,8 +84,6 @@ class UserGetPublicRequest(BaseModel):
 def handle_user_get_public(req_body: dict):
     rq = UserGetPublicRequest(**req_body)
     user = db.get_user(rq.username)
-    if user is None:
-        UserError("User does not exist")
     return user.dict(
         include={"username": ..., "display_name": ..., "bio": ..., "movie_ratings": ...}
     )
@@ -100,7 +98,8 @@ def handle_user_get_private(req_body: dict):
 # user.update
 
 
-class UserUpdateRequest(TokenRequest):
+class UserUpdateRequest(BaseModel):
+    token: str
     display_name: str = DISPLAY_NAME_FIELD
     bio: str = BIO_FIELD
 

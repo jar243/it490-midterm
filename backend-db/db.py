@@ -11,14 +11,6 @@ from sqlmodel import Field, Relationship, Session, SQLModel, create_engine, sele
 from broker import UserError
 from env import EnvConfig
 
-# CONSTANTS
-
-
-USERNAME_REGEX = r"^[\w\-]{3,}$"
-DISPLAY_NAME_REGEX = r"^[\w\-' ]{3,}$"
-PASSWORD_REGEX = r"^[\w\-&^/\\$#@!%*().,\"';:[\]{}]{5,30}$"
-
-
 # TABLE MODELS
 
 
@@ -109,21 +101,19 @@ class DatabaseFacade:
             session.delete(token)
             session.commit()
 
-    def create_user(self, email: str, username: str, display_name: str, password: str):
-        if not re.match(PASSWORD_REGEX, password):
-            raise UserError("Invalid password")
+    def create_user(
+        self, email: EmailStr, username: str, display_name: str, password: str
+    ):
         pass_salt = secrets.token_bytes(32)
         pass_hash = hashlib.pbkdf2_hmac(
             "sha256", password.encode("utf-8"), pass_salt, 100000
         )
-        new_user = User.validate(
-            {
-                "username": username,
-                "email": email,
-                "display_name": display_name,
-                "password_hash": pass_hash,
-                "password_salt": pass_salt,
-            }
+        new_user = User(
+            username=username,
+            email=email,
+            display_name=display_name,
+            password_hash=pass_hash,
+            password_salt=pass_salt,
         )
         with Session(self._engine) as session:
             session.add(new_user)
@@ -136,7 +126,10 @@ class DatabaseFacade:
     def get_user(self, username: str):
         with Session(self._engine) as session:
             statement = select(User).where(User.username == username)
-            return session.exec(statement).first()
+            user = session.exec(statement).first()
+            if user is None:
+                raise UserError(f"Username {username} does not exist")
+            return user
 
     def update_user(self, user: User):
         with Session(self._engine) as session:
