@@ -24,10 +24,10 @@ if (!is_null($err_msg)) {
 
 ?>
 
-<div class="row g-2">
+<div class="row g-3">
     <div class="col-md-4">
 
-        <div class="card">
+        <div class="card mb-3">
             <div class="card-body">
                 <h1 class="card-title"><?php echo ($user->display_name) ?></h1>
                 <h3 class="card-subtitle mb-2 text-muted">@<?php echo ($user->username) ?></h3>
@@ -42,18 +42,41 @@ if (!is_null($err_msg)) {
                 ?>
             </ul>
             <?php
-            if ($is_active_user) {
-                echo ('<div class="card-body"><a href="/edit-profile.php" class="btn btn-primary">Edit Profile</a></div>');
+            if ($is_logged_in) {
+                echo ('<div class="card-body">');
+                if ($is_active_user) {
+                    echo ('<a href="/edit-profile.php" class="btn btn-primary">Edit Profile</a>');
+                } else {
+                    // TODO add friendship buttons here
+                }
+                echo ('</div>');
             }
             ?>
         </div>
 
 
     </div>
-    <div class="col-9">
-
-
-
+    <div class="col-md-8">
+        <?php
+        if (count($user->movie_ratings) === 0) {
+            echo ('<div class="alert alert-info" style="width: 100%;">User has not rated any movies yet...</div>');
+        } else {
+            echo ('<div class="row row-cols-1 row-cols-md-2 g-4">');
+            foreach ($user->movie_ratings as $rating) {
+                echo ('<div class="col"> <div class="card">');
+                echo ('<img src="' . $rating->movie->poster_url . '" class="card-img-top">');
+                echo ('<div class="card-body">');
+                echo ('<h3 class="card-title">' . $rating->stars . '/5</h3>');
+                echo ('<h5 class="card-subtitle text-muted">' . $rating->movie->title . '</h5>');
+                if (strlen($rating->comment) > 0) {
+                    echo ('<p class="card-text mt-2">' . $rating->comment . '</p>');
+                }
+                echo ('</div>');
+                echo ('</div> </div>');
+            }
+            echo ("</div>");
+        }
+        ?>
     </div>
 </div>
 

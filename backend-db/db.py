@@ -25,7 +25,7 @@ class MovieRating(SQLModel, table=True):
     movie_id: int = Field(foreign_key="movie.id", primary_key=True)
     user_id: int = Field(foreign_key="user.id", primary_key=True)
     user: Optional["User"] = Relationship(back_populates="movie_ratings")
-    rating: int = Field(ge=1, le=5)
+    stars: int = Field(ge=1, le=5)
     comment: str = Field(default="", max_length=350)
 
 

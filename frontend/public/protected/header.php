@@ -16,6 +16,7 @@ if (!is_null($token)) {
     ];
   }
 }
+$is_logged_in = !is_null($active_user);
 ?>
 
 <!doctype html>
