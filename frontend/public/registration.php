@@ -1,68 +1,70 @@
 <?php
 include('protected/header.php');
 
-if (isset($_POST['signup'])) {
-  
-  $username = $_POST['username'];
-  $email = $_POST['email'];
-  $password = $_POST['password'];
-  $password2 = $_POST['password2'];
-
-  $_SESSION['username'] = $_POST['username'];
-  
-  if ($password == $password2) {
-     $res = $rc->token_generate($email, $username, $password, $password2);
-     if ($res->is_error === true) {
-        $err_msg = $res->msg;
-      }else {
-        setcookie('token', $res->token);
-        header("location: index.php");
-        exit();
-    }
+if (!is_null($active_user)) {
+    header("location: my-profile.php");
+    exit();
 }
 
+$err_msg = null;
+
+if (isset($_POST['registration'])) {
+    $username = $_POST['username'];
+    $display_name = $_POST['display_name'];
+    $email = $_POST['email'];
+    $password = $_POST['password'];
+    $password_check = $_POST['password_check'];
+
+    if ($password == $password_check) {
+        $res = $rc->user_create($username, $display_name, $email, $password);
+        if ($res->is_error === true) {
+            $err_msg = $res->msg;
+        } else {
+            setcookie('token', $res->token);
+            header("location: index.php");
+            exit();
+        }
+    } else {
+        $err_msg = 'Passwords must match';
+    }
+}
 ?>
+
 <div class="card mx-auto" style="max-width: 500px;">
-  <div class="card-body">
-    <h4 class="card-title">Registration</h4>
-    <form>
-
-      <div class="form-outline mb-4">
-        <input type="text" class="form-control form-control-lg" id="validationDefault01" required>
-
-        <label class="form-label" for="form3Example1cg">Your Name</label>
-      </div>
-
-      <div class="form-outline mb-4">
-        <input type="email" id="form3Example3cg" class="form-control form-control-lg" />
-        <label class="form-label" for="form3Example3cg">Your Email</label>
-      </div>
-
-      <div class="form-outline mb-4">
-        <input type="password" id="form3Example4cg" class="form-control form-control-lg" />
-        <label class="form-label" for="form3Example4cg">Password</label>
-      </div>
-
-      <div class="form-outline mb-4">
-        <input type="password" id="form3Example4cdg" class="form-control form-control-lg" />
-        <label class="form-label" for="form3Example4cdg">Repeat your password</label>
-      </div>
-
-      <div class="form-check d-flex justify-content-left mb-5">
-        <input class="form-check-input me-2" type="checkbox" value="" id="form2Example3cg" />
-        <label class="form-check-label" for="form2Example3g">
-          I agree all statements in <a href="#!" class="text-body"><u>Terms of service</u></a>
-        </label>
-      </div>
-
-      <div class="d-flex justify-content-center">
-        <a <input class="btn btn-success btn-block btn-lg gradient-custom-4 text-body" href="Login.html">Submit</a>
-      </div>
-
-      <p class="text-center text-muted mt-5 mb-0">Have already an account? <a href="Login.html" class="fw-bold text-body"><u>Login here</u></a></p>
-
-    </form>
-  </div>
+    <div class="card-body">
+        <?php
+        if (!is_null($err_msg)) {
+            echo ('<div class="alert alert-danger">' . $err_msg . '</div>');
+        }
+        ?>
+        <h4 class="card-title">Registration</h4>
+        <form method='POST'>
+            <div class="form-group">
+                <label>Username</label><br>
+                <input class="form-control" type="text" name="username" required>
+            </div>
+            <div class="form-group">
+                <label>Display Name</label><br>
+                <input class="form-control" type="text" name="display_name" required>
+            </div>
+            <div class="form-group">
+                <label>Email</label><br>
+                <input class="form-control" type="email" name="email" required>
+            </div>
+            <div class="form-group">
+                <label>Password</label><br>
+                <input class="form-control" type="password" name="password" required>
+            </div>
+            <div class="form-group">
+                <label>Password Check</label><br>
+                <input class="form-control" type="password" name="password_check" required>
+            </div>
+            <input class="btn btn-success" type="submit" name="registration" value="Register">
+        </form>
+    </div>
+    <div class="card-footer text-muted">
+        Have an account already? <a href="login.php">Login here</a>
+    </div>
 </div>
 
 <?php include('protected/footer.php'); ?>
