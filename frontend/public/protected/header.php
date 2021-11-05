@@ -42,7 +42,7 @@ if (!is_null($token)) {
       <div class="collapse navbar-collapse" id="navbarToggleTarget">
         <ul class="navbar-nav m-1 mr-auto">
           <li class="nav-item">
-            <a class="nav-link" href="/">Home</a>
+            <a class="nav-link" href="./home.php">Home</a>
           </li>
         </ul>
 
