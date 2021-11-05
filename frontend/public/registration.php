@@ -21,7 +21,7 @@ if (isset($_POST['registration'])) {
             $err_msg = $res->msg;
         } else {
             setcookie('token', $res->token);
-            header("location: index.php");
+            header("location: .");
             exit();
         }
     } else {
