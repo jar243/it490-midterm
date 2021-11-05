@@ -5,10 +5,15 @@ $rc = new RabbitClient('127.0.0.1', 5672, 'guest', 'guest');
 $token = isset($_COOKIE['token']) ? $_COOKIE['token'] : null;
 $active_user = null;
 if (!is_null($token)) {
-  $active_user = $rc->token_get_user($token);
-  if (is_null($active_user)) {
+  $res = $rc->token_get_user($token);
+  if ($res->is_error === true) {
     $token = null;
     setcookie('token', 'null', 1);
+  } else {
+    $active_user = (object) [
+      'username' => $res->username,
+      'display_name' => $res->display_name
+    ];
   }
 }
 ?>
@@ -49,7 +54,7 @@ if (!is_null($token)) {
         } else {
           echo ('
                 <a class="btn btn-primary" href="./my-profile.php">' . $active_user->display_name . '</a>
-                <a class="btn btn-success" href="./logout.php">Logout</a>
+                <a class="btn btn-secondary" href="./logout.php">Logout</a>
             ');
         }
         ?>

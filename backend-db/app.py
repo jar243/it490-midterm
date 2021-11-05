@@ -44,8 +44,6 @@ def handle_token_gen(req_body: dict):
 def handle_token_get_user(req_body: dict):
     rq = TokenRequest(**req_body)
     user = db.get_token_user(rq.token)
-    if user is None:
-        return None
     return user.dict(include={"username": ..., "display_name": ...})
 
 

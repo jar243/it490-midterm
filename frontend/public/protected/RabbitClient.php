@@ -25,7 +25,7 @@ class RabbitClient
         return new AMQPStreamConnection($this->host, $this->port, $this->user, $this->pass);
     }
 
-    private function publish(string $route, array $args)
+    private function publish(string $route, array $args): object
     {
         $RES_QUEUE = 'amq.rabbitmq.reply-to';
 

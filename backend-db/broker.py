@@ -30,9 +30,8 @@ def publish(channel: Channel, route_key: str, msg_body: Union[dict, None]):
     channel.basic_publish("", route_key, json.dumps(msg_body, separators=(",", ":")))
 
 
-def reply_ok(channel: Channel, reply_queue: str, reply: Union[dict, None]):
-    if isinstance(reply, dict):
-        reply["is_error"] = False
+def reply_ok(channel: Channel, reply_queue: str, reply: dict):
+    reply["is_error"] = False
     publish(channel, reply_queue, reply)
 
 
@@ -61,8 +60,10 @@ def wrap_handler(handler: HandlerCallable):
             if not isinstance(parsed_body, dict):
                 raise RuntimeError("Invalid request body")
             handler_reply = handler(parsed_body)
-            if not isinstance(handler_reply, dict) and handler_reply is not None:
-                raise RuntimeError("Handler must return dict or None")
+            if handler_reply is None:
+                handler_reply = {}
+            elif not isinstance(handler_reply, dict):
+                raise ValueError("Handler must return a dict")
             if needs_reply:
                 reply_ok(channel, reply_queue, handler_reply)
         except Exception as exc:
@@ -97,7 +98,7 @@ def declare_log_exchange(channel: Channel):
         log_queue_name: str = frame.method.queue  # auto-generated queue name
         channel.queue_bind(log_queue_name, LOGS_EXCHANGE)
         wrapped_handler = wrap_handler(handle_log)
-        channel.basic_consume(log_queue_name, wrapped_handler)
+        channel.basic_consume(log_queue_name, wrapped_handler, auto_ack=True)
 
     def on_exc_declare(frame):
         channel.queue_declare("", auto_delete=True, callback=on_queue_declare)
