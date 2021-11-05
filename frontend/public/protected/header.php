@@ -60,7 +60,7 @@ if (!is_null($token)) {
             ');
           } else {
             echo ('
-                <a class="btn btn-primary m-1" href="./my-profile.php">My Profile</a>
+                <a class="btn btn-primary m-1" href="./profile.php?username=' . $active_user->username . '">My Profile</a>
                 <a class="btn btn-secondary m-1" href="./logout.php">Logout</a>
             ');
           }

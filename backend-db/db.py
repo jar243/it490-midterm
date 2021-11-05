@@ -22,8 +22,9 @@ class Movie(SQLModel, table=True):
 
 
 class MovieRating(SQLModel, table=True):
-    user_id: int = Field(foreign_key="user.id", primary_key=True)
     movie_id: int = Field(foreign_key="movie.id", primary_key=True)
+    user_id: int = Field(foreign_key="user.id", primary_key=True)
+    user: Optional["User"] = Relationship(back_populates="movie_ratings")
     rating: int = Field(ge=1, le=5)
     comment: str = Field(default="", max_length=350)
 
@@ -32,7 +33,7 @@ class User(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     username: str = Field(index=True, sa_column_kwargs={"unique": True})
     display_name: str
-    movie_ratings: list[MovieRating] = Relationship()
+    movie_ratings: list[MovieRating] = Relationship(back_populates="user")
     bio: str = Field(default="")
 
     email: EmailStr = Field(sa_column_kwargs={"unique": True})
@@ -58,7 +59,8 @@ class AuthToken(SQLModel, table=True):
 class DatabaseFacade:
     def __init__(self, cfg: EnvConfig) -> None:
         self._engine = create_engine(
-            f"mysql+pymysql://{cfg.mysql_user}:{cfg.mysql_password}@{cfg.mysql_host}:{cfg.mysql_port}/appdb"
+            f"mysql+pymysql://{cfg.mysql_user}:{cfg.mysql_password}@{cfg.mysql_host}:{cfg.mysql_port}/appdb",
+            echo=True,
         )
         SQLModel.metadata.create_all(self._engine)
 
@@ -135,3 +137,9 @@ class DatabaseFacade:
         with Session(self._engine) as session:
             session.add(user)
             session.commit()
+            session.refresh(user)
+
+    def get_user_ratings(self, user: User):
+        with Session(self._engine) as session:
+            session.add(user)
+            return [rating.dict() for rating in user.movie_ratings]
