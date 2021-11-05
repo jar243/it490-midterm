@@ -24,41 +24,51 @@ if (!is_null($token)) {
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-
+  <title>Movies App</title>
   <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
 </head>
 
 <body class="bg-secondary">
 
   <nav class="navbar navbar-dark bg-dark navbar-expand-lg mb-3">
+    <div class='container-fluid' style="max-width: 1500px;">
 
-    <div class="navbar-brand">Movies App</div>
+      <div class="navbar-brand">Movies App</div>
 
-    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarToggleTarget">
-      <span class="navbar-toggler-icon"></span>
-    </button>
+      <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarToggleTarget">
+        <span class="navbar-toggler-icon"></span>
+      </button>
 
-    <div class="collapse navbar-collapse" id="navbarToggleTarget">
-      <ul class="navbar-nav mr-auto">
-        <li class="nav-item">
-          <a class="nav-link" href=".">Home</a>
-        </li>
-      </ul>
-      <div class="btn-group navbar-nav ml-auto">
-        <?php
-        if (is_null($active_user)) {
-          echo ('
-                <a class="btn btn-primary" href="./login.php">Login</a>
-                <a class="btn btn-success" href="./registration.php">Register</a>
+      <div class="collapse navbar-collapse" id="navbarToggleTarget">
+        <ul class="navbar-nav m-1 mr-auto">
+          <li class="nav-item">
+            <a class="nav-link" href="/">Home</a>
+          </li>
+        </ul>
+
+        <form class="d-flex m-1" action="/search-movies.php" autocomplete="on">
+          <input class="form-control" type="search" name="query" placeholder="Search Movies" required>
+          <button class="btn btn-outline-light ml-2" type="submit">Search</button>
+        </form>
+
+        <div class="navbar-nav">
+          <?php
+          if (is_null($active_user)) {
+            echo ('
+                <a class="btn btn-primary m-1" href="./login.php">Login</a>
+                <a class="btn btn-success m-1" href="./registration.php">Register</a>
             ');
-        } else {
-          echo ('
-                <a class="btn btn-primary" href="./my-profile.php">' . $active_user->display_name . '</a>
-                <a class="btn btn-secondary" href="./logout.php">Logout</a>
+          } else {
+            echo ('
+                <a class="btn btn-primary m-1" href="./my-profile.php">My Profile</a>
+                <a class="btn btn-secondary m-1" href="./logout.php">Logout</a>
             ');
-        }
-        ?>
+          }
+          ?>
+        </div>
       </div>
-    </div>
 
+    </div>
   </nav>
+
+  <div class='container-fluid' style="max-width: 1500px;">
