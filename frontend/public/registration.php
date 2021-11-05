@@ -2,7 +2,7 @@
 include('protected/header.php');
 
 if (!is_null($active_user)) {
-    header("location: my-profile.php");
+    header("location: /");
     exit();
 }
 
