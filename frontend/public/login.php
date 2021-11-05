@@ -2,7 +2,7 @@
 include('protected/header.php');
 
 if (!is_null($active_user)) {
-    header("location: .");
+    header("location: /");
     exit();
 }
 
@@ -17,7 +17,7 @@ if (isset($_POST['login'])) {
         $err_msg = $res->msg;
     } else {
         setcookie('token', $res->token);
-        header("location: .");
+        header("location: /");
         exit();
     }
 }

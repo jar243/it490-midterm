@@ -8,7 +8,7 @@ if (isset($_GET['username'])) {
         exit();
     }
 } else {
-    header("location: .");
+    header("location: /");
     exit();
 }
 
