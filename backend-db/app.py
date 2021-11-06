@@ -82,10 +82,9 @@ class UserGetPublicRequest(BaseModel):
 def handle_user_get_public(req_body: dict):
     rq = UserGetPublicRequest(**req_body)
     user = db.get_user(rq.username)
-    reply = user.dict(
-        include={"username": ..., "display_name": ..., "bio": ..., "movie_ratings": ...}
-    )
+    reply = user.dict(include={"username": ..., "display_name": ..., "bio": ...})
     reply["movie_ratings"] = db.get_user_ratings(user)
+    reply["friends"] = db.get_user_friends(user)
     return reply
 
 
@@ -94,6 +93,8 @@ def handle_user_get_private(req_body: dict):
     user = db.get_token_user(rq.token)
     reply = user.dict(exclude={"password_hash": ..., "password_salt": ...})
     reply["movie_ratings"] = db.get_user_ratings(user)
+    reply["friends"] = db.get_user_friends(user)
+    reply["friend_requests"] = db.get_user_friend_requests(user)
     return reply
 
 

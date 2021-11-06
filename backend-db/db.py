@@ -15,18 +15,37 @@ from env import EnvConfig
 
 
 class Movie(SQLModel, table=True):
-    id: Optional[int] = Field(default=None, primary_key=True)
+    id: str = Field(primary_key=True)
     title: str
-    year: int
-    genre: str
+    poster_url: str
+    ratings: list["MovieRating"] = Relationship(back_populates="movie")
 
 
 class MovieRating(SQLModel, table=True):
     movie_id: int = Field(foreign_key="movie.id", primary_key=True)
     user_id: int = Field(foreign_key="user.id", primary_key=True)
-    user: Optional["User"] = Relationship(back_populates="movie_ratings")
+    movie: Movie = Relationship(back_populates="ratings")
+    user: "User" = Relationship(back_populates="movie_ratings")
     stars: int = Field(ge=1, le=5)
     comment: str = Field(default="", max_length=350)
+
+
+class FriendRequest(SQLModel, table=True):
+    sender_id: Optional[int] = Field(
+        default=None, primary_key=True, foreign_key="user.id"
+    )
+    recipient_id: Optional[int] = Field(
+        default=None, primary_key=True, foreign_key="user.id"
+    )
+
+
+class FriendLink(SQLModel, table=True):
+    user_id_1: Optional[int] = Field(
+        default=None, primary_key=True, foreign_key="user.id"
+    )
+    user_id_2: Optional[int] = Field(
+        default=None, primary_key=True, foreign_key="user.id"
+    )
 
 
 class User(SQLModel, table=True):
@@ -35,6 +54,8 @@ class User(SQLModel, table=True):
     display_name: str
     movie_ratings: list[MovieRating] = Relationship(back_populates="user")
     bio: str = Field(default="")
+    friends: list["User"] = Relationship(link_model=FriendLink)
+    friend_requests: list["User"] = Relationship(back_populates="recipient")
 
     email: EmailStr = Field(sa_column_kwargs={"unique": True})
     password_hash: bytes = Field(index=False)
@@ -143,3 +164,63 @@ class DatabaseFacade:
         with Session(self._engine) as session:
             session.add(user)
             return [rating.dict() for rating in user.movie_ratings]
+
+    def get_user_friends(self, user: User):
+        with Session(self._engine) as session:
+            session.add(user)
+            return [
+                {"username": friend.username, "display_name": friend.display_name}
+                for friend in user.friends
+            ]
+
+    def get_user_friend_requests(self, user: User):
+        with Session(self._engine) as session:
+            statement = select(FriendRequest).where(
+                FriendRequest.recipient_id == user.id
+            )
+            senders: list[User] = []
+            for frq in session.exec(statement):
+                statement2 = select(User).where(User.id == frq.sender_id)
+                sender = session.exec(statement2).first()
+                if sender is not None:
+                    senders.append(sender)
+            return [
+                {
+                    "user_id": sender.id,
+                    "username": sender.username,
+                    "display_name": sender.display_name,
+                }
+                for sender in senders
+            ]
+
+    def send_friend_request(self, sender: User, recipient: User):
+        with Session(self._engine) as session:
+            friend_request = FriendRequest(
+                sender_id=sender.id, recipient_id=recipient.id
+            )
+            session.add(friend_request)
+            try:
+                session.commit()
+            except IntegrityError as err:
+                if err.orig.args[0] == 1062:
+                    raise UserError("Friend request already sent")
+
+    def _modify_friend_request(self, sender: User, recipient: User, accept: bool):
+        with Session(self._engine) as session:
+            statement = select(FriendRequest).where(
+                FriendRequest.sender_id == sender.id
+                and FriendRequest.recipient_id == recipient.id
+            )
+            friend_request = session.exec(statement).first()
+            if friend_request is None:
+                raise UserError("Friend request does not exist")
+            if accept:
+                recipient.friends.append(sender)
+            session.delete(friend_request)
+            session.commit()
+
+    def accept_friend_request(self, sender: User, recipient: User):
+        self._modify_friend_request(sender, recipient, True)
+
+    def decline_friend_request(self, sender: User, recipient: User):
+        self._modify_friend_request(sender, recipient, False)
