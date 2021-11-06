@@ -4,6 +4,7 @@ require_once(__DIR__ . '../../../vendor/autoload.php');
 
 use PhpAmqpLib\Connection\AMQPStreamConnection;
 use PhpAmqpLib\Message\AMQPMessage;
+use PhpAmqpLib\Exception\AMQPTimeoutException;
 
 class RabbitClient
 {
@@ -29,8 +30,15 @@ class RabbitClient
     {
         $RES_QUEUE = 'amq.rabbitmq.reply-to';
 
-        $connection = $this->open_connection();
-        $channel = $connection->channel();
+        try {
+            $connection = $this->open_connection();
+            $channel = $connection->channel();
+        } catch (exception $e) {
+            return (object) [
+                'is_error' => true,
+                'msg' => "Failed to connect"
+            ];
+        }
 
         $response = 'NO_RESPONSE_YET';
         $channel->basic_consume(
@@ -53,8 +61,18 @@ class RabbitClient
         );
 
         $channel->basic_publish($msg, '', $route);
+
         while ($response == 'NO_RESPONSE_YET') {
-            $channel->wait();
+            try {
+                $channel->wait(timeout: 5);
+            } catch (AMQPTimeoutException $exc) {
+                $channel->close();
+                $connection->close();
+                return (object) [
+                    'is_error' => true,
+                    'msg' => 'Request timed out'
+                ];
+            }
         }
 
         $channel->close();
