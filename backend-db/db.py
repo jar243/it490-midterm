@@ -2,7 +2,7 @@ import hashlib
 import re
 import secrets
 from datetime import datetime, timedelta
-from typing import Optional
+from typing import Optional, List
 
 from pydantic import EmailStr
 from sqlalchemy.exc import IntegrityError
@@ -17,12 +17,13 @@ from env import EnvConfig
 class Movie(SQLModel, table=True):
     id: str = Field(primary_key=True)
     title: str
+    description: str = Field(max_length=5000, index=False)
     poster_url: str
-    ratings: list["MovieRating"] = Relationship(back_populates="movie")
+    ratings: List["MovieRating"] = Relationship(back_populates="movie")
 
 
 class MovieRating(SQLModel, table=True):
-    movie_id: int = Field(foreign_key="movie.id", primary_key=True)
+    movie_id: str = Field(foreign_key="movie.id", primary_key=True)
     user_id: int = Field(foreign_key="user.id", primary_key=True)
     movie: Movie = Relationship(back_populates="ratings")
     user: "User" = Relationship(back_populates="movie_ratings")
@@ -52,10 +53,11 @@ class User(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     username: str = Field(index=True, sa_column_kwargs={"unique": True})
     display_name: str
-    movie_ratings: list[MovieRating] = Relationship(back_populates="user")
     bio: str = Field(default="")
-    friends: list["User"] = Relationship(link_model=FriendLink)
-    friend_requests: list["User"] = Relationship(back_populates="recipient")
+
+    movie_ratings: List[MovieRating] = Relationship(back_populates="user")
+    friends: List["User"] = Relationship(link_model=FriendLink)
+    friend_requests: List["User"] = Relationship(back_populates="recipient")
 
     email: EmailStr = Field(sa_column_kwargs={"unique": True})
     password_hash: bytes = Field(index=False)
