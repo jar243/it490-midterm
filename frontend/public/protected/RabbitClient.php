@@ -188,4 +188,20 @@ class RabbitClient
             ['token' => $token]
         );
     }
+
+    public function get_trending_movies()
+    {
+        return $this->publish(
+            'api.trending.movies',
+            []
+        );
+    }
+
+    public function search_movies(string $search_query)
+    {
+        return $this->publish(
+            'api.movies.search',
+            ['query' => $search_query]
+        );
+    }
 }
