@@ -32,21 +32,17 @@ class MoviesApi:
 
         if response.status_code == 200:
             data = json.loads(response.text)
-
-            for i in data["results"]:
-                print("Title: " + i["title"] + "\n")
-                print("Overview: " + i["overview"] + "\n")
-
-                poster_path = i["backdrop_path"]
-                if poster_path != None:
-                    print(f"{self._image_url}{poster_path}")
-
-                else:
-                    print("Sorry, poster not available")
-
+            return [
+                {
+                    "title": movie["name"],
+                    "description": movie["overview"],
+                    "poster_path": f"{self._image_url}{movie['backdrop_path']}",
+                }
+                for movie in data["results"]
+            ]
         else:
-            print(f" Error: {response.status_code} ")
-        return []
+            raise RuntimeError(f"API Error: {response.status_code}")
+
 
     def trending_movies(self):
 
@@ -57,21 +53,16 @@ class MoviesApi:
 
         if response.status_code == 200:
             data = json.loads(response.text)
-
-            for i in data["results"]:
-                print("Title: " + i["title"] + "\n")
-                print("Overview: " + i["overview"] + "\n")
-
-                poster_path = i["backdrop_path"]
-                if poster_path != None:
-                    print(f"{self._image_url}{poster_path}")
-                else:
-                    print("Sorry, poster not available")
-
+            return [
+                {
+                    "title": movie["name"],
+                    "description": movie["overview"],
+                    "poster_path": f"{self._image_url}{movie['backdrop_path']}",
+                }
+                for movie in data["results"]
+            ]
         else:
-            print(f"Error: {response.status_code} ")
-
-        return ()
+            raise RuntimeError(f"API Error: {response.status_code}")
 
     def trending_shows(self):
         shows_trending = f"{self._host_url}/3/trending/tv/week?api_key=" + self._api_key
@@ -96,19 +87,17 @@ class MoviesApi:
 
         if response.status_code == 200:
             data = json.loads(response.text)
-
-            for i in data["results"]:
-                print("Title: " + i["title"] + "\n")
-                print("Overview: " + i["overview"] + "\n")
-                poster_path = i["backdrop_path"]
-                if poster_path != None:
-                    print(f"{self._image_url}{poster_path}")
-                else:
-                    print("Sorry, poster not available")
-
+            return [
+                {
+                    "title": movie["name"],
+                    "description": movie["overview"],
+                    "poster_path": f"{self._image_url}{movie['backdrop_path']}",
+                }
+                for movie in data["results"]
+            ]
         else:
-            print(f"Error: {response.status_code} ")
-        return []
+            raise RuntimeError(f"API Error: {response.status_code}")
+
 
     def popular_shows(self):
         popular = f"{self._host_url}/3/tv/popular?api_key=" + self._api_key
@@ -116,18 +105,17 @@ class MoviesApi:
 
         if response.status_code == 200:
             data = json.loads(response.text)
-
-            for i in data["results"]:
-                print("Name: " + i["name"] + "\n")
-                print("Overview: " + i["overview"] + "\n")
-                poster_path = i["backdrop_path"]
-                if poster_path != None:
-                    print(f"{self._image_url}{poster_path}")
-                else:
-                    print("Sorry, poster not available")
+            return [
+                {
+                    "title": movie["name"],
+                    "description": movie["overview"],
+                    "poster_path": f"{self._image_url}{movie['backdrop_path']}",
+                }
+                for movie in data["results"]
+            ]
         else:
-            print(f"Error: {response.status_code} ")
-        return []
+            raise RuntimeError(f"API Error: {response.status_code}")
+
 
 
 api: MoviesApi
@@ -148,22 +136,18 @@ def handle_trending_movies(req_body: dict):
 
 
 def handle_trending_shows(req_body: dict):
-    rq = MoviesApi(**req_body)
-    rq.trending_shows()
-
-    results = []
-
-    return {"results": results}
+    results = api.trending_movies()
+    return {"shows": results}
 
 
 def handle_popular_movies(req_body: dict):
-    results = []
-    return {"results": results}
+    results = api.trending_movies()
+    return {"movies": results}
 
 
 def handle_popular_shows(req_body: dict):
-    results = []
-    return {"results": results}
+    results = api.trending_movies()
+    return {"shows": results}
 
 
 def main():
