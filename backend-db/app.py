@@ -115,6 +115,40 @@ def handle_user_update(req_body: dict):
     db.update_user(user)
 
 
+# friend routes
+
+
+class SendFriendRequest(BaseModel):
+    token: str
+    recipient_username: str
+
+
+def handle_friend_request_send(req_body: dict):
+    rq = SendFriendRequest(**req_body)
+    sender = db.get_token_user(rq.token)
+    recipient = db.get_user(rq.recipient_username)
+    db.send_friend_request(sender, recipient)
+
+
+class ModifyFriendRequest(BaseModel):
+    token: str
+    sender_username: str
+
+
+def handle_friend_request_accept(req_body: dict):
+    rq = ModifyFriendRequest(**req_body)
+    recipient = db.get_token_user(rq.token)
+    sender = db.get_user(rq.sender_username)
+    db.accept_friend_request(sender, recipient)
+
+
+def handle_friend_request_decline(req_body: dict):
+    rq = ModifyFriendRequest(**req_body)
+    recipient = db.get_token_user(rq.token)
+    sender = db.get_user(rq.sender_username)
+    db.accept_friend_request(sender, recipient)
+
+
 # run app
 
 
@@ -129,6 +163,9 @@ def main():
         "db.user.get.public": handle_user_get_public,
         "db.user.get.private": handle_user_get_private,
         "db.user.update": handle_user_update,
+        "db.friend-request.send": handle_friend_request_send,
+        "db.friend-request.accept": handle_friend_request_accept,
+        "db.friend-request.decline": handle_friend_request_decline,
     }
 
     cfg = EnvConfig()

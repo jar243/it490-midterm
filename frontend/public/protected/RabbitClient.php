@@ -141,6 +141,30 @@ class RabbitClient
         );
     }
 
+    public function friend_request_send(string $token, string $recipient_username)
+    {
+        return $this->publish(
+            'db.friend-request.send',
+            ['token' => $token, 'recipient_username' => $recipient_username]
+        );
+    }
+
+    public function friend_request_accept(string $token, string $sender_username)
+    {
+        return $this->publish(
+            'db.friend-request.accept',
+            ['token' => $token, 'sender_username' => $sender_username]
+        );
+    }
+
+    public function friend_request_decline(string $token, string $sender_username)
+    {
+        return $this->publish(
+            'db.friend-request.decline',
+            ['token' => $token, 'sender_username' => $sender_username]
+        );
+    }
+
     public function token_generate(string $username, string $password)
     {
         return $this->publish(

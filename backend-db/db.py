@@ -1,8 +1,7 @@
 import hashlib
-import re
 import secrets
 from datetime import datetime, timedelta
-from typing import Optional, List
+from typing import List, Optional
 
 from pydantic import EmailStr
 from sqlalchemy.exc import IntegrityError
@@ -41,10 +40,10 @@ class FriendRequest(SQLModel, table=True):
 
 
 class FriendLink(SQLModel, table=True):
-    user_id_1: Optional[int] = Field(
+    user_id: Optional[int] = Field(
         default=None, primary_key=True, foreign_key="user.id"
     )
-    user_id_2: Optional[int] = Field(
+    friend_id: Optional[int] = Field(
         default=None, primary_key=True, foreign_key="user.id"
     )
 
@@ -56,12 +55,25 @@ class User(SQLModel, table=True):
     bio: str = Field(default="")
 
     movie_ratings: List[MovieRating] = Relationship(back_populates="user")
-    friends: List["User"] = Relationship(link_model=FriendLink)
-    friend_requests: List["User"] = Relationship(back_populates="recipient")
+    friends: List["User"] = Relationship(
+        link_model=FriendLink,
+        sa_relationship_kwargs={
+            "primaryjoin": "User.id==FriendLink.user_id",
+            "secondaryjoin": "User.id==FriendLink.friend_id",
+        },
+    )
+    friend_requests: List["User"] = Relationship(
+        link_model=FriendRequest,
+        sa_relationship_kwargs={
+            "primaryjoin": "User.id==FriendRequest.recipient_id",
+            "secondaryjoin": "User.id==FriendRequest.sender_id",
+        },
+    )
 
     email: EmailStr = Field(sa_column_kwargs={"unique": True})
     password_hash: bytes = Field(index=False)
     password_salt: bytes = Field(index=False)
+    tokens: List["AuthToken"] = Relationship(back_populates="user")
 
     def check_password(self, password: str):
         test_hash = hashlib.pbkdf2_hmac(
@@ -73,6 +85,7 @@ class User(SQLModel, table=True):
 class AuthToken(SQLModel, table=True):
     token: str = Field(default=None, primary_key=True)
     user_id: int = Field(foreign_key="user.id")
+    user: User = Relationship(back_populates="tokens")
     expiration_date: datetime = datetime.utcnow() + timedelta(1)
 
 
@@ -83,7 +96,7 @@ class DatabaseFacade:
     def __init__(self, cfg: EnvConfig) -> None:
         self._engine = create_engine(
             f"mysql+pymysql://{cfg.mysql_user}:{cfg.mysql_password}@{cfg.mysql_host}:{cfg.mysql_port}/appdb",
-            echo=True,
+            echo=False,
         )
         SQLModel.metadata.create_all(self._engine)
 
@@ -106,16 +119,15 @@ class DatabaseFacade:
 
     def get_token_user(self, token_str: str):
         with Session(self._engine) as session:
-            statement = select(AuthToken, User).where(AuthToken.token == token_str)
-            result = session.exec(statement).first()
-            if result is None:
+            statement = select(AuthToken).where(AuthToken.token == token_str)
+            token = session.exec(statement).first()
+            if token is None:
                 raise UserError("Invalid token")
-            token, user = result
             if datetime.utcnow() > token.expiration_date:
                 session.delete(token)
                 session.commit()
                 raise UserError("Invalid token")
-        return user
+            return token.user
 
     def delete_token(self, token_str: str):
         with Session(self._engine) as session:
@@ -171,28 +183,16 @@ class DatabaseFacade:
         with Session(self._engine) as session:
             session.add(user)
             return [
-                {"username": friend.username, "display_name": friend.display_name}
+                friend.dict(include={"username": ..., "display_name": ...})
                 for friend in user.friends
             ]
 
     def get_user_friend_requests(self, user: User):
         with Session(self._engine) as session:
-            statement = select(FriendRequest).where(
-                FriendRequest.recipient_id == user.id
-            )
-            senders: list[User] = []
-            for frq in session.exec(statement):
-                statement2 = select(User).where(User.id == frq.sender_id)
-                sender = session.exec(statement2).first()
-                if sender is not None:
-                    senders.append(sender)
+            session.add(user)
             return [
-                {
-                    "user_id": sender.id,
-                    "username": sender.username,
-                    "display_name": sender.display_name,
-                }
-                for sender in senders
+                sender.dict(include={"username": ..., "display_name": ...})
+                for sender in user.friend_requests
             ]
 
     def send_friend_request(self, sender: User, recipient: User):
@@ -209,6 +209,7 @@ class DatabaseFacade:
 
     def _modify_friend_request(self, sender: User, recipient: User, accept: bool):
         with Session(self._engine) as session:
+            session.add_all((sender, recipient))
             statement = select(FriendRequest).where(
                 FriendRequest.sender_id == sender.id
                 and FriendRequest.recipient_id == recipient.id
@@ -217,9 +218,12 @@ class DatabaseFacade:
             if friend_request is None:
                 raise UserError("Friend request does not exist")
             if accept:
+                sender.friends.append(recipient)
                 recipient.friends.append(sender)
             session.delete(friend_request)
             session.commit()
+            session.refresh(recipient)
+            session.refresh(sender)
 
     def accept_friend_request(self, sender: User, recipient: User):
         self._modify_friend_request(sender, recipient, True)
