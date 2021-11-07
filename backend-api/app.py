@@ -4,6 +4,7 @@ import json
 from pydantic import BaseSettings
 from broker import run_rabbit_app
 
+
 class EnvConfig(BaseSettings):
     tmdb_api_key: str
 
@@ -21,19 +22,24 @@ class MoviesApi:
         # logic here
         search_str = input("Search Movie: ")
         api_search = f"{self._host_url}/3/search/movie?api_key={self._api_key}"
-        params = {'query':search_str}
+
+        params = {'query': search_str}
 
         response = requests.get(api_search, params)
 
         # request data and check for error 
+
         if response.status_code == 200:
             data = json.loads(response.text)
-            for i in data['results']:
+            
+            for i in data['results']:  
                 print('Title: ' + i['title'] +'\n')
                 print('Overview: ' + i['overview']+'\n')
+
                 poster_path = (i['backdrop_path'])
                 if poster_path != None:
                     print(f"{self._image_url}{poster_path}")
+                    
                 else:
                     print("Sorry, poster not available")
 
@@ -45,13 +51,14 @@ class MoviesApi:
 
         movies_trending = f"{self._host_url}/3/trending/movie/week?api_key=" + self._api_key
         response = requests.get(movies_trending)
-
+    
         if response.status_code == 200:
             data = json.loads(response.text)
-            
+        
             for i in data['results']:
                 print('Title: ' + i['title'] + '\n')
                 print('Overview: ' + i['overview']+'\n')
+
                 poster_path = (i['backdrop_path'])
                 if poster_path != None:
                     print(f"{self._image_url}{poster_path}")
@@ -61,8 +68,9 @@ class MoviesApi:
         else:
             print(f"Error: {response.status_code} ")
 
-        
-        return[]
+    
+        return ()
+    
 
     def trending_shows(self):
     
@@ -131,17 +139,25 @@ def handle_movies_search(req_body: dict):
     query = req_body.get('query')
     if query is None or not isinstance(query, str) or len(query) == 0:
         raise RuntimeError('Invalid query supplied')
-
-    results = []
+    else:
+        MoviesApi.search_movies(query)
+        results = []
 
     return {'results': results}
 
 def handle_trending_movies(req_body: dict):
+    rq = MoviesApi(**req_body)
+    rq.trending_movies()
     results = []
+
     return {'results': results}
 
 def handle_trending_shows(req_body: dict):
+    rq = MoviesApi(**req_body)
+    rq.trending_shows()
+
     results = []
+
     return {'results': results}
 
 def handle_popular_movies(req_body: dict):
