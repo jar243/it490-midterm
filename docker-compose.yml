@@ -1,9 +1,9 @@
-version: "1.0.0"
+version: "3"
 
 services:
   rabbitmq:
     image: rabbitmq:3.9.7-management
-    container_name: 'rabbitmq'
+    container_name: 'it490-rabbitmq'
     ports:
         - 5672:5672
         - 15672:15672
@@ -14,7 +14,7 @@ services:
         - it490_rabbitmq_net
   db:
     image: mysql:8
-    container_name: 'mysql'
+    container_name: 'it490-mysql'
     ports:
         - 3306:3306
     volumes:
