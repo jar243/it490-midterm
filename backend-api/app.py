@@ -6,7 +6,7 @@ from broker import run_rabbit_app, UserError
 
 
 class EnvConfig(BaseSettings):
-    tmdb_api_key: str
+    tmdb_api_key: str = "291050bd6f830358af2856e014e9dec6"
 
     class Config:
         env_file = ".env"
@@ -24,9 +24,9 @@ class MoviesApi:
             "id": raw_movie["id"],
             "title": raw_movie["title"],
             "description": raw_movie["overview"],
-            "genre_ids": raw_movie["genre_ids"],
-            "year": raw_movie["release_date"][:4],
-            "poster_path": f"{self._image_url}{raw_movie['poster_path'][1:]}",
+            # "genre_ids": raw_movie["genre_ids"],
+            "year": raw_movie.get("release_date", "0000")[:4],
+            "poster_url": f"{self._image_url}{raw_movie['poster_path'][1:]}",
         }
 
     def _format_many_movies(self, raw_movies: list[dict]):

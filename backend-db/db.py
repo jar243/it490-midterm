@@ -17,15 +17,20 @@ class Movie(SQLModel, table=True):
     id: str = Field(primary_key=True)
     title: str
     description: str = Field(max_length=5000, index=False)
-    poster_url: str
+    year: int
+    poster_url: str = Field(max_length=1000, index=False)
     ratings: List["MovieRating"] = Relationship(back_populates="movie")
 
 
 class MovieRating(SQLModel, table=True):
-    movie_id: str = Field(foreign_key="movie.id", primary_key=True)
-    user_id: int = Field(foreign_key="user.id", primary_key=True)
-    movie: Movie = Relationship(back_populates="ratings")
-    user: "User" = Relationship(back_populates="movie_ratings")
+    movie_id: Optional[str] = Field(
+        default=None, foreign_key="movie.id", primary_key=True
+    )
+    user_id: Optional[int] = Field(
+        default=None, foreign_key="user.id", primary_key=True
+    )
+    movie: Optional[Movie] = Relationship(back_populates="ratings")
+    user: Optional["User"] = Relationship(back_populates="movie_ratings")
     stars: int = Field(ge=1, le=5)
     comment: str = Field(default="", max_length=350)
 
@@ -177,7 +182,13 @@ class DatabaseFacade:
     def get_user_ratings(self, user: User):
         with Session(self._engine) as session:
             session.add(user)
-            return [rating.dict() for rating in user.movie_ratings]
+            ratings = []
+            for rating in user.movie_ratings:
+                rating_expanded = rating.dict()
+                if rating.movie is not None:
+                    rating_expanded["movie"] = rating.movie.dict()
+                ratings.append(rating_expanded)
+            return ratings
 
     def get_user_friends(self, user: User):
         with Session(self._engine) as session:
@@ -230,3 +241,46 @@ class DatabaseFacade:
 
     def decline_friend_request(self, sender: User, recipient: User):
         self._modify_friend_request(sender, recipient, False)
+
+    def submit_movie_review(self, movie: Movie, user: User, stars: int, comment: str):
+        with Session(self._engine) as session:
+            new_rating = MovieRating(
+                movie_id=movie.id, user_id=user.id, stars=stars, comment=comment
+            )
+            session.add(new_rating)
+            try:
+                session.commit()
+            except IntegrityError as err:
+                if err.orig.args[0] == 1062:
+                    pass
+            session.refresh(movie)
+            session.refresh(user)
+
+    def add_movie(self, **kwargs):
+        with Session(self._engine) as session:
+            new_movie = Movie(**kwargs)
+            session.add(new_movie)
+            try:
+                session.commit()
+            except IntegrityError as err:
+                if err.orig.args[0] == 1062:
+                    raise RuntimeError("Movie already added")
+
+    def get_movie_ratings(self, movie: Movie):
+        with Session(self._engine) as session:
+            session.add(movie)
+            ratings = []
+            for rating in movie.ratings:
+                rd = rating.dict()
+                if rating.user is not None:
+                    rd["user"] = rating.user.dict(
+                        include={"username": ..., "display_name": ...}
+                    )
+                ratings.append(rd)
+            return ratings
+
+    def get_movie(self, movie_id: str):
+        with Session(self._engine) as session:
+            statement = select(Movie).where(Movie.id == movie_id)
+            movie = session.exec(statement).first()
+            return movie

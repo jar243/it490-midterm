@@ -3,7 +3,7 @@ import warnings
 from pydantic import BaseModel, EmailStr, Field
 from sqlalchemy.exc import SAWarning
 
-from broker import run_rabbit_app
+from broker import run_rabbit_app, UserError
 from db import DatabaseFacade
 from env import EnvConfig
 
@@ -149,6 +149,57 @@ def handle_friend_request_decline(req_body: dict):
     db.accept_friend_request(sender, recipient)
 
 
+# review routes
+
+
+class ReviewSubmitRequest(BaseModel):
+    token: str
+    movie_id: str
+    stars: int = Field(ge=1, le=5)
+    comment: str = Field(default="", max_length=350)
+
+
+def handle_review_submit(req_body: dict):
+    rq = ReviewSubmitRequest(**req_body)
+    user = db.get_token_user(rq.token)
+    movie = db.get_movie(rq.movie_id)
+    if movie is None:
+        raise UserError("Movie does not exist")
+
+    db.submit_movie_review(movie, user, rq.stars, rq.comment)
+
+
+# movie routes
+
+
+class MovieAddRequest(BaseModel):
+    id: str
+    title: str
+    description: str = Field(max_length=5000)
+    # genre_ids: list[int]
+    year: int
+    poster_url: str = Field(max_length=1000)
+
+
+def handle_movie_add(req_body: dict):
+    rq = MovieAddRequest(**req_body)
+    db.add_movie(**rq.dict())
+
+
+class MovieGetRequest(BaseModel):
+    movie_id: str
+
+
+def handle_movie_get(req_body: dict):
+    rq = MovieGetRequest(**req_body)
+    movie = db.get_movie(rq.movie_id)
+    if movie is None:
+        raise UserError("Movie does not exist")
+    movie_dict = movie.dict()
+    movie_dict["ratings"] = db.get_movie_ratings(movie)
+    return movie_dict
+
+
 # run app
 
 
@@ -166,6 +217,9 @@ def main():
         "db.friend-request.send": handle_friend_request_send,
         "db.friend-request.accept": handle_friend_request_accept,
         "db.friend-request.decline": handle_friend_request_decline,
+        "db.review.submit": handle_review_submit,
+        "db.movie.add": handle_movie_add,
+        "db.movie.get": handle_movie_get,
     }
 
     cfg = EnvConfig()
