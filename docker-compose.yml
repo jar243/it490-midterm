@@ -7,9 +7,6 @@ services:
     ports:
         - 5672:5672
         - 15672:15672
-    volumes:
-        - ~/.docker-conf/rabbitmq/data/:/var/lib/rabbitmq/
-        - ~/.docker-conf/rabbitmq/log/:/var/log/rabbitmq
     networks:
         - it490_rabbitmq_net
   db:
@@ -17,8 +14,6 @@ services:
     container_name: 'it490-mysql'
     ports:
         - 3306:3306
-    volumes:
-        - ~/.docker-conf/mysql/log:/var/log/mysql
     environment:
       MYSQL_ROOT_PASSWORD: 'toor'
       MYSQL_DATABASE: 'appdb'
