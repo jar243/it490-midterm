@@ -12,7 +12,7 @@ class Utils
       ?>
         <div class="col-md-3 mb-4">
           <div class="card">
-            <a href="/movie.php?id=<?= $movie->id ?>"><img src="<?= $movie->poster_path ?>" class='card-img-top'></a>
+            <a href="/movie.php?id=<?= $movie->id ?>"><img src="<?= $movie->poster_url ?>" class='card-img-top'></a>
             <div class="card-body">
               <a href="/movie.php?id=<?= $movie->id ?>">
                 <h3 class="card-title"><?= $movie->title ?></h3>

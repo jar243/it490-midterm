@@ -215,9 +215,37 @@ class RabbitClient
 
     public function get_movie(string $movie_id)
     {
-        return $this->publish(
-            'api.movies.get',
+        $db_res = $this->publish(
+            'db.movie.get',
             ['movie_id' => $movie_id]
+        );
+        if ($db_res->is_error == true) {
+            $api_res = $this->publish(
+                'api.movies.get',
+                ['movie_id' => $movie_id]
+            );
+            if ($api_res->is_error === false) {
+                $this->publish(
+                    'db.movie.add',
+                    (array) $api_res
+                );
+            }
+            return $api_res;
+        } else {
+            return $db_res;
+        }
+    }
+
+    public function submit_review(string $token, string $movie_id, int $stars, string $comment)
+    {
+        return $this->publish(
+            'db.review.submit',
+            [
+                'token' => $token,
+                'movie_id' => $movie_id,
+                'stars' => $stars,
+                'comment' => $comment
+            ]
         );
     }
 }

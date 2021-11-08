@@ -138,24 +138,26 @@ endif; ?>
         <?php if (count($user->movie_ratings) === 0) : ?>
             <div class="alert alert-info" style="width: 100%;">User has not rated any movies yet...</div>
         <?php else : ?>
-            <div class="row row-cols-1 row-cols-md-2 g-4">
+            <div class="row">
                 <?php foreach ($user->movie_ratings as $rating) :
                     $star_string = str_repeat('⭐', $rating->stars);
                 ?>
-                    <div class="col">
-                        <div class="card">
-                            <img src="<?= $rating->movie->poster_url ?>" class='card-img-top'>
+                    <div class="col-lg-4">
+                        <div class="card mb-3">
+                            <a href="/movie.php?id=<?= $rating->movie->id ?>">
+                                <img src="<?= $rating->movie->poster_url ?>" class='card-img-top'>
+                            </a>
                             <div class="card-body">
                                 <h3 class="card-title"><?= $star_string ?></h3>
-                                <h5 class="card-subtitle text-muted"><?= $rating->movie->title ?></h5>
+                                <h3 class="card-subtitle text-muted"><?= $rating->movie->title ?></h3>
                                 <?php if (strlen($rating->comment) > 0) : ?>
                                     <p class="card-text mt-2"><?= $rating->comment ?></p>
                                 <?php endif; ?>
                             </div>
                         </div>
                     </div>
+                <?php endforeach; ?>
             </div>
-        <?php endforeach; ?>
     </div>
 <?php endif; ?>
 </div>
