@@ -6,6 +6,10 @@ from broker import run_rabbit_app, UserError
 
 
 class EnvConfig(BaseSettings):
+    broker_host: str = "127.0.0.1"
+    broker_port: int = 5672
+    broker_user: str = "guest"
+    broker_password: str = "guest"
     tmdb_api_key: str = "291050bd6f830358af2856e014e9dec6"
 
     class Config:
