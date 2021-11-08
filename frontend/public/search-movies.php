@@ -1,26 +1,45 @@
 <?php
 include('protected/header.php');
 
-?>
-<!doctype html>
-<html lang="en">
+$err_msg = null;
 
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Movies App</title>
-  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
-</head>
+if (isset($_GET['query'])) {
+  $query = $_GET['query'];
+  $res = $rc->search_movies($query);
+  if ($res->is_error === true) {
+    $err_msg = $res->msg;
+  } else {
+    $movies = $res->movies;
+    if (count($movies) === 0) {
+      $err_msg = "No movies found...";
+    }
+  }
+} else {
+  $err_msg = "No search query supplied";
+}
 
-<body class="bg-secondary">
-    <?php
-        $res = $_GET['search_item'];
-        $res = $rc->search_movies ($query);
-        $res->movies
-    ?>
-</body>
-
-</html>
+if (!is_null($err_msg)) : ?>
+  <div class="alert alert-danger mx-auto" style="max-width:500px;"><?= $err_msg ?></div>
 <?php
-include('protected/footer.php');
-?>
+  include('protected/footer.php');
+  exit();
+endif; ?>
+
+<div class="row">
+  <?php foreach ($movies as $movie) : ?>
+    <div class="col-md-3 mb-3">
+      <div class="card">
+        <a href="/movie.php?id=<?= $movie->id ?>"><img src="<?= $movie->poster_path ?>" class='card-img-top'></a>
+        <div class="card-body">
+          <a href="/movie.php?id=<?= $movie->id ?>">
+            <h3 class="card-title"><?= $movie->title ?></h3>
+          </a>
+          <h5 class="card-subtitle text-muted"><?= $movie->year ?></h5>
+          <p class="card-text mt-2"><?= $movie->description ?></p>
+        </div>
+      </div>
+    </div>
+  <?php endforeach; ?>
+</div>
+
+<?php include('protected/footer.php'); ?>

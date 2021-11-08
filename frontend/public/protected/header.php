@@ -53,19 +53,13 @@ $is_logged_in = !is_null($active_user);
         </form>
 
         <div class="navbar-nav">
-          <?php
-          if (is_null($active_user)) {
-            echo ('
-                <a class="btn btn-primary m-1" href="./login.php">Login</a>
-                <a class="btn btn-success m-1" href="./registration.php">Register</a>
-            ');
-          } else {
-            echo ('
-                <a class="btn btn-primary m-1" href="./profile.php?username=' . $active_user->username . '">My Profile</a>
-                <a class="btn btn-secondary m-1" href="./logout.php">Logout</a>
-            ');
-          }
-          ?>
+          <?php if (is_null($active_user)) : ?>
+            <a class="btn btn-primary m-1" href="./login.php">Login</a>
+            <a class="btn btn-success m-1" href="./registration.php">Register</a>
+          <?php else : ?>
+            <a class="btn btn-primary m-1" href="./profile.php?username=<?= $active_user->username ?>">My Profile</a>
+            <a class="btn btn-secondary m-1" href="./logout.php">Logout</a>
+          <?php endif; ?>
         </div>
       </div>
 

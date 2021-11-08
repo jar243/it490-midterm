@@ -29,6 +29,13 @@ class MoviesApi:
             "poster_path": f"{self._image_url}{raw_movie['poster_path'][1:]}",
         }
 
+    def _format_many_movies(self, raw_movies: list[dict]):
+        return [
+            self._format_movie_data(movie)
+            for movie in raw_movies
+            if movie["poster_path"] is not None
+        ]
+
     def search_movies(self, search_str: str):
         api_search = f"{self._host_url}/3/search/movie?api_key={self._api_key}"
         params = {"query": search_str}
@@ -36,7 +43,7 @@ class MoviesApi:
 
         if response.status_code == 200:
             data = json.loads(response.text)
-            return [self._format_movie_data(movie) for movie in data["results"]]
+            return self._format_many_movies(data["results"])
         else:
             raise RuntimeError(f"API Error: {response.status_code}")
 
@@ -56,7 +63,7 @@ class MoviesApi:
 
         if response.status_code == 200:
             data = json.loads(response.text)
-            return [self._format_movie_data(movie) for movie in data["results"]]
+            return self._format_many_movies(data["results"])
         else:
             raise RuntimeError(f"API Error: {response.status_code}")
 
@@ -66,7 +73,7 @@ class MoviesApi:
 
         if response.status_code == 200:
             data = json.loads(response.text)
-            return [self._format_movie_data(movie) for movie in data["results"]]
+            return self._format_many_movies(data["results"])
         else:
             raise RuntimeError(f"API Error: {response.status_code}")
 

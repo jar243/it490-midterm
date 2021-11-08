@@ -197,11 +197,27 @@ class RabbitClient
         );
     }
 
+    public function get_popular_movies()
+    {
+        return $this->publish(
+            'api.popular.movies',
+            []
+        );
+    }
+
     public function search_movies(string $search_query)
     {
         return $this->publish(
             'api.movies.search',
             ['query' => $search_query]
+        );
+    }
+
+    public function get_movie(string $movie_id)
+    {
+        return $this->publish(
+            'api.movies.get',
+            ['movie_id' => $movie_id]
         );
     }
 }
