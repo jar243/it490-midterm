@@ -43,7 +43,6 @@ class MoviesApi:
         else:
             raise RuntimeError(f"API Error: {response.status_code}")
 
-
     def trending_movies(self):
 
         movies_trending = (
@@ -98,7 +97,6 @@ class MoviesApi:
         else:
             raise RuntimeError(f"API Error: {response.status_code}")
 
-
     def popular_shows(self):
         popular = f"{self._host_url}/3/tv/popular?api_key=" + self._api_key
         response = requests.get(popular)
@@ -115,7 +113,6 @@ class MoviesApi:
             ]
         else:
             raise RuntimeError(f"API Error: {response.status_code}")
-
 
 
 api: MoviesApi
@@ -151,7 +148,6 @@ def handle_popular_shows(req_body: dict):
 
 
 def main():
-
     routes = {
         "api.movies.search": handle_movies_search,
         "api.trending.movies": handle_trending_movies,
@@ -160,12 +156,12 @@ def main():
         "api.popular.shows": handle_popular_shows,
     }
 
-    trending_movies = {"api.trending.movies": handle_trending_movies}
-    trending_shows = {"api.trending.shows": handle_trending_shows}
-    popular_movies = {"api.popular.movies": handle_popular_movies}
-    popular_shows = {"api.popular.shows": handle_popular_shows}
     global api
     config = EnvConfig()
     api = MoviesApi(config.tmdb_api_key)
 
     run_rabbit_app("backend-api", "127.0.0.1", 5672, "guest", "guest", routes)
+
+
+if __name__ == "__main__":
+    main()
