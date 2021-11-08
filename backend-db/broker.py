@@ -26,6 +26,15 @@ class UserError(Exception):
 HandlerCallable = Callable[[dict], Union[dict, None]]
 
 
+def get_err_msg(exc: Exception):
+    if isinstance(exc, UserError):
+        return str(UserError)
+    elif isinstance(exc, ValidationError):
+        return f"Invalid field(s): {', '.join([err['loc'][0] for err in exc.errors()])}"
+    else:
+        return "Server Error"
+
+
 def publish(channel: Channel, route_key: str, msg_body: Union[dict, None]):
     channel.basic_publish("", route_key, json.dumps(msg_body, separators=(",", ":")))
 
@@ -68,11 +77,7 @@ def wrap_handler(handler: HandlerCallable):
                 reply_ok(channel, reply_queue, handler_reply)
         except Exception as exc:
             if needs_reply:
-                err_msg = (
-                    str(exc)
-                    if isinstance(exc, (UserError, ValidationError))
-                    else "Server Error"
-                )
+                err_msg = get_err_msg(exc)
                 reply_err(channel, reply_queue, err_msg)
             publish_log(channel, str(exc))
 
@@ -148,4 +153,3 @@ def run_rabbit_app(
     except KeyboardInterrupt:
         print("Shutting down...")
         conn.close()
-        conn.ioloop.start()

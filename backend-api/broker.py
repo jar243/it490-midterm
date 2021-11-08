@@ -10,10 +10,10 @@ from pydantic import ValidationError
 
 # GLOBAL VARIABLES
 
-LOG_FILE = Path(".log")
+LOG_FILE = Path(__file__).parent.joinpath(".log")
 LOGS_EXCHANGE = "logs"
+LOG_NAME: str
 channel: Channel
-log_name: str
 
 
 class UserError(Exception):
@@ -26,13 +26,21 @@ class UserError(Exception):
 HandlerCallable = Callable[[dict], Union[dict, None]]
 
 
+def get_err_msg(exc: Exception):
+    if isinstance(exc, UserError):
+        return str(UserError)
+    elif isinstance(exc, ValidationError):
+        return f"Invalid field(s): {', '.join([err['loc'][0] for err in exc.errors()])}"
+    else:
+        return "Server Error"
+
+
 def publish(channel: Channel, route_key: str, msg_body: Union[dict, None]):
     channel.basic_publish("", route_key, json.dumps(msg_body, separators=(",", ":")))
 
 
-def reply_ok(channel: Channel, reply_queue: str, reply: Union[dict, None]):
-    if isinstance(reply, dict):
-        reply["is_error"] = False
+def reply_ok(channel: Channel, reply_queue: str, reply: dict):
+    reply["is_error"] = False
     publish(channel, reply_queue, reply)
 
 
@@ -43,7 +51,7 @@ def reply_err(channel: Channel, reply_queue: str, err_msg: str):
 
 def publish_log(channel: Channel, log_msg: str):
     log_body = {
-        "sender": log_name,
+        "sender": LOG_NAME,
         "time": datetime.utcnow().isoformat(),
         "msg": log_msg,
     }
@@ -61,17 +69,15 @@ def wrap_handler(handler: HandlerCallable):
             if not isinstance(parsed_body, dict):
                 raise RuntimeError("Invalid request body")
             handler_reply = handler(parsed_body)
-            if not isinstance(handler_reply, dict) and handler_reply is not None:
-                raise RuntimeError("Handler must return dict or None")
+            if handler_reply is None:
+                handler_reply = {}
+            elif not isinstance(handler_reply, dict):
+                raise ValueError("Handler must return a dict")
             if needs_reply:
                 reply_ok(channel, reply_queue, handler_reply)
         except Exception as exc:
             if needs_reply:
-                err_msg = (
-                    str(exc)
-                    if isinstance(exc, (UserError, ValidationError))
-                    else "Server Error"
-                )
+                err_msg = get_err_msg(exc)
                 reply_err(channel, reply_queue, err_msg)
             publish_log(channel, str(exc))
 
@@ -89,7 +95,7 @@ def declare_queue(channel: Channel, queue_name: str, handler: Callable):
 
 def declare_log_exchange(channel: Channel):
     def handle_log(rq: dict):
-        log_str = " | ".join([rq["sender"], rq["time"], rq["msg"]]) + "\n"
+        log_str = f'{rq["sender"]} | {rq["time"]}\n{rq["msg"]}\n{"- "*39}-\n'
         with open(LOG_FILE, "a") as fl:
             fl.write(log_str)
 
@@ -97,7 +103,7 @@ def declare_log_exchange(channel: Channel):
         log_queue_name: str = frame.method.queue  # auto-generated queue name
         channel.queue_bind(log_queue_name, LOGS_EXCHANGE)
         wrapped_handler = wrap_handler(handle_log)
-        channel.basic_consume(log_queue_name, wrapped_handler)
+        channel.basic_consume(log_queue_name, wrapped_handler, auto_ack=True)
 
     def on_exc_declare(frame):
         channel.queue_declare("", auto_delete=True, callback=on_queue_declare)
@@ -108,7 +114,7 @@ def declare_log_exchange(channel: Channel):
 
 
 def generate_connect_callback(route_handlers: dict[str, Callable]):
-    def on_channel_open(new_channel):
+    def on_channel_open(new_channel: Channel):
         global channel
         channel = new_channel
         declare_log_exchange(channel)
@@ -132,8 +138,8 @@ def run_rabbit_app(
     password: str,
     route_handlers: dict[str, Callable],
 ):
-    global log_name
-    log_name = device_name
+    global LOG_NAME
+    LOG_NAME = device_name
 
     conn_params = pika.ConnectionParameters(
         host=host, port=port, credentials=pika.PlainCredentials(username, password)
@@ -147,4 +153,3 @@ def run_rabbit_app(
     except KeyboardInterrupt:
         print("Shutting down...")
         conn.close()
-        conn.ioloop.start()
