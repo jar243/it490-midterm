@@ -1,6 +1,8 @@
 <?php
 ob_start();
 require('protected/RabbitClient.php');
+require('protected/Utils.php');
+
 $rc = new RabbitClient('127.0.0.1', 5672, 'guest', 'guest');
 $token = isset($_COOKIE['token']) ? $_COOKIE['token'] : null;
 $active_user = null;
@@ -43,7 +45,7 @@ $is_logged_in = !is_null($active_user);
       <div class="collapse navbar-collapse" id="navbarToggleTarget">
         <ul class="navbar-nav m-1 mr-auto">
           <li class="nav-item">
-            <a class="nav-link" href="./home.php">Home</a>
+            <a class="nav-link" href="/">Home</a>
           </li>
         </ul>
 

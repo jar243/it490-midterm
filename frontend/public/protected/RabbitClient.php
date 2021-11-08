@@ -193,7 +193,7 @@ class RabbitClient
     {
         return $this->publish(
             'api.trending.movies',
-            []
+            ['placeholder' => '']
         );
     }
 
@@ -201,7 +201,7 @@ class RabbitClient
     {
         return $this->publish(
             'api.popular.movies',
-            []
+            ['placeholder' => '']
         );
     }
 
