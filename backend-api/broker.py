@@ -28,7 +28,7 @@ HandlerCallable = Callable[[dict], Union[dict, None]]
 
 def get_err_msg(exc: Exception):
     if isinstance(exc, UserError):
-        return str(UserError)
+        return str(exc)
     elif isinstance(exc, ValidationError):
         return f"Invalid field(s): {', '.join([err['loc'][0] for err in exc.errors()])}"
     else:

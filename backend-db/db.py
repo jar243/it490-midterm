@@ -283,4 +283,6 @@ class DatabaseFacade:
         with Session(self._engine) as session:
             statement = select(Movie).where(Movie.id == movie_id)
             movie = session.exec(statement).first()
+            if movie is None:
+                raise UserError("Movie does not exist")
             return movie

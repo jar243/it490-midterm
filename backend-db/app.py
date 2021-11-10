@@ -163,9 +163,6 @@ def handle_review_submit(req_body: dict):
     rq = ReviewSubmitRequest(**req_body)
     user = db.get_token_user(rq.token)
     movie = db.get_movie(rq.movie_id)
-    if movie is None:
-        raise UserError("Movie does not exist")
-
     db.submit_movie_review(movie, user, rq.stars, rq.comment)
 
 
@@ -193,8 +190,6 @@ class MovieGetRequest(BaseModel):
 def handle_movie_get(req_body: dict):
     rq = MovieGetRequest(**req_body)
     movie = db.get_movie(rq.movie_id)
-    if movie is None:
-        raise UserError("Movie does not exist")
     movie_dict = movie.dict()
     movie_dict["ratings"] = db.get_movie_ratings(movie)
     return movie_dict

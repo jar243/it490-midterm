@@ -219,7 +219,7 @@ class RabbitClient
             'db.movie.get',
             ['movie_id' => $movie_id]
         );
-        if ($db_res->is_error == true) {
+        if ($db_res->is_error == true && $db_res->msg == "Movie does not exist") {
             $api_res = $this->publish(
                 'api.movies.get',
                 ['movie_id' => $movie_id]
