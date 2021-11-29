@@ -19,6 +19,12 @@ services:
       MYSQL_DATABASE: 'appdb'
       MYSQL_USER: 'devuser'
       MYSQL_PASSWORD: 'devpassword'
+  smtp:
+    image: namshi/smtp
+    container_name: it490-mailserver
+    restart: always
+    ports:
+     - "25:25"
 
 
 networks:
