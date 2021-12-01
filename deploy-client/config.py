@@ -6,7 +6,7 @@ import json
 import typer
 
 
-CONFIG_FILE = Path.home() / ".deploy-client-config.json"
+CONFIG_FILE = Path.home() / ".it490-deploy-client" / "config.json"
 
 
 class ClientConfig(BaseModel):
@@ -29,6 +29,7 @@ def read_config():
 
 
 def write_config(cfg: ClientConfig):
+    CONFIG_FILE.parent.mkdir(exist_ok=True)
     with open(CONFIG_FILE, "w") as fl:
         json.dump(cfg.dict(), fl, indent=4)
 
@@ -43,10 +44,16 @@ def host(server_host: str):
     write_config(cfg)
     typer.echo(f"Set host to {server_host}")
 
+
 @app.command()
-def credentials(username: str, password: str):
+def credentials(
+    username: str,
+    password: str = typer.Option(
+        ..., prompt=True, confirmation_prompt=True, hide_input=True
+    ),
+):
     cfg = read_config()
     cfg.username = username
     cfg.password = password
     write_config(cfg)
-    typer.echo(f"Set credentials to {username}:******")
+    typer.echo(f"Set credentials to {username}:*********")
