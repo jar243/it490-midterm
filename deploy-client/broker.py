@@ -1,9 +1,25 @@
-from datetime import datetime, timedelta
-import pika
-from config import read_config
 import json
+from datetime import datetime, timedelta
+from typing import Optional
+
+import pika
+from pydantic import BaseModel, root_validator
+
+from config import read_config
 
 TIMEOUT_SECONDS = 5
+
+
+class DeployReply(BaseModel):
+    is_error: bool
+    error_msg: Optional[str] = None
+
+    @root_validator
+    def check_err(cls, values: dict):
+        is_error, error_msg = values.get("is_error"), values.get("error_msg")
+        if is_error is True and error_msg is None:
+            raise ValueError("Replys with errors must include error message")
+        return values
 
 
 class BrokerChannel:

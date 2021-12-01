@@ -2,7 +2,6 @@ import typer
 
 from config import app as config_app
 
-
 qa_app = typer.Typer()
 
 

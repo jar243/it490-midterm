@@ -1,10 +1,9 @@
-from typing import Optional
-from pathlib import Path
-from pydantic import BaseModel
 import json
+from pathlib import Path
+from typing import Optional
 
 import typer
-
+from pydantic import BaseModel
 
 CONFIG_FILE = Path.home() / ".it490-deploy-client" / "config.json"
 
