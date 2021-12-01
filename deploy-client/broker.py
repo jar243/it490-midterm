@@ -1,6 +1,5 @@
 import json
 from datetime import datetime, timedelta
-from typing import Optional
 
 import pika
 from pydantic import BaseModel, root_validator
@@ -12,25 +11,25 @@ TIMEOUT_SECONDS = 5
 
 class DeployReply(BaseModel):
     is_error: bool
-    error_msg: Optional[str] = None
+    error_msg: str = ""
 
     @root_validator
     def check_err(cls, values: dict):
         is_error, error_msg = values.get("is_error"), values.get("error_msg")
-        if is_error is True and error_msg is None:
+        if is_error is True and len(error_msg):
             raise ValueError("Replys with errors must include error message")
         return values
 
 
-class BrokerChannel:
+class ChannelContext:
     def __enter__(self):
         cfg = read_config()
         cred = pika.PlainCredentials(cfg.username, cfg.password, True)
         params = pika.ConnectionParameters(
             host=cfg.server_host, port=cfg.rabbit_port, credentials=cred
         )
-        self.conn = pika.BlockingConnection(params)
-        self.channel = self.conn.channel()
+        self.conn = pika.BlockingConnection(params).__enter__()
+        self.channel = self.conn.channel().__enter__()
         return self.channel
 
     def __exit__(self):
@@ -38,8 +37,8 @@ class BrokerChannel:
         self.conn.__exit__()
 
 
-def send_msg(routing_key: str, body: dict):
-    with BrokerChannel() as channel:
+def send_msg(routing_key: str, body: dict = {}):
+    with ChannelContext() as channel:
         channel.basic_publish(
             "",
             routing_key,
