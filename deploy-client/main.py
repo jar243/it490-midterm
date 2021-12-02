@@ -1,26 +1,52 @@
+from enum import Enum
+
 import typer
 
-from broker import send_msg, DeployReply
+from broker import Reply, send_msg
 from config import app as config_app
 
 
-# QUALITY ASSURANCE APP
+# SHARED CLASSES
 
 
-qa_app = typer.Typer()
+class BuildType(str, Enum):
+    FRONTEND = "frontend"
+    BACKEND = "backend"
+    DMZ = "dmz"
 
 
-@qa_app.command()
-def approve():
-    res = send_msg("qa.approve")
+# QUALITY ASSURANCE
 
 
-@qa_app.command()
-def deny():
-    res = send_msg("qa.deny")
+class QaReply(Reply):
+    version: str
 
 
-# PARENT APP
+qa_app = typer.Typer(short_help="Quality Assurance Commands")
+
+
+@qa_app.command(short_help="Get active app version in QA")
+def version(build: BuildType):
+    reply_dict = send_msg("qa.active-version", {"build": build.value})
+    reply = QaReply(**reply_dict)
+    typer.echo(f"Active {build.value} QA version: {reply.version}")
+
+
+@qa_app.command(short_help="Approve QA version and push to production")
+def approve(build: BuildType):
+    reply_dict = send_msg("qa.approve", {"build": build.value})
+    reply = QaReply(**reply_dict)
+    typer.echo(f"Approved {build.value} v{reply.version}, pushing to production")
+
+
+@qa_app.command(short_help="Deny QA version and return to development")
+def deny(build: BuildType):
+    reply_dict = send_msg("qa.deny", {"build": build.value})
+    reply = QaReply(**reply_dict)
+    typer.echo(f"Denied {build.value} v{reply.version}, returning to development")
+
+
+# MAIN APP
 
 
 app = typer.Typer()
