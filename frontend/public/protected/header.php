@@ -31,7 +31,7 @@ $is_logged_in = !is_null($active_user);
   <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
 </head>
 
-<body class="bg-secondary">
+<body class="bg-light">
 
   <nav class="navbar navbar-dark bg-dark navbar-expand-lg mb-3">
     <div class='container-fluid' style="max-width: 1500px;">
