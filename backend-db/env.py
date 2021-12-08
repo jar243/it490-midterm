@@ -1,4 +1,4 @@
-from pydantic import BaseSettings
+from pydantic import BaseSettings, EmailStr
 
 
 class EnvConfig(BaseSettings):
@@ -10,6 +10,7 @@ class EnvConfig(BaseSettings):
     mysql_port: int = 3306
     mysql_user: str = "devuser"
     mysql_password: str = "devpassword"
+    email_addr: EmailStr = EmailStr("no-reply@movieworld.com")
 
     class Config:
         env_file = ".env"

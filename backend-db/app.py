@@ -3,11 +3,13 @@ import warnings
 from pydantic import BaseModel, EmailStr, Field
 from sqlalchemy.exc import SAWarning
 
-from broker import run_rabbit_app, UserError
+from broker import run_rabbit_app
 from db import DatabaseFacade
+from email_facade import EmailFacade
 from env import EnvConfig
 
 db: DatabaseFacade
+email: EmailFacade
 
 # constants
 
@@ -221,6 +223,9 @@ def main():
 
     global db
     db = DatabaseFacade(cfg)
+
+    global email
+    email = EmailFacade(cfg.email_addr)
 
     run_rabbit_app(
         "backend-db",
