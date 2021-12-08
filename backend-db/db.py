@@ -208,6 +208,10 @@ class DatabaseFacade:
 
     def send_friend_request(self, sender: User, recipient: User):
         with Session(self._engine) as session:
+            session.add(sender)
+            for friend in sender.friends:
+                if friend.id == recipient.id:
+                    raise UserError("You are already friends with this user")
             friend_request = FriendRequest(
                 sender_id=sender.id, recipient_id=recipient.id
             )
@@ -284,5 +288,5 @@ class DatabaseFacade:
             statement = select(Movie).where(Movie.id == movie_id)
             movie = session.exec(statement).first()
             if movie is None:
-                raise UserError("Movie does not exist")
+                raise UserError("Movie must be added to database")
             return movie
