@@ -20,6 +20,7 @@ class Movie(SQLModel, table=True):
     year: int
     poster_url: str = Field(max_length=1000, index=False)
     ratings: List["MovieRating"] = Relationship(back_populates="movie")
+    watch_parties: List["WatchParty"] = Relationship(back_populates="movie")
 
 
 class MovieRating(SQLModel, table=True):
@@ -74,6 +75,13 @@ class User(SQLModel, table=True):
             "secondaryjoin": "User.id==FriendRequest.sender_id",
         },
     )
+    watch_parties: List["WatchParty"] = Relationship(
+        link_model="WatchPartyLink",
+        sa_relationship_kwargs={
+            "primaryjoin": "User.id==WatchPartyLink.user_id",
+            "secondaryjoin": "WatchParty.id==WatchPartyLink.party_id",
+        },
+    )
 
     email: EmailStr = Field(sa_column_kwargs={"unique": True})
     password_hash: bytes = Field(index=False)
@@ -92,6 +100,28 @@ class AuthToken(SQLModel, table=True):
     user_id: int = Field(foreign_key="user.id")
     user: User = Relationship(back_populates="tokens")
     expiration_date: datetime = datetime.utcnow() + timedelta(1)
+
+
+class WatchPartyLink(SQLModel, table=True):
+    party_id: Optional[int] = Field(
+        default=None, primary_key=True, foreign_key="watchparty.id"
+    )
+    user_id: Optional[int] = Field(
+        default=None, primary_key=True, foreign_key="user.id"
+    )
+
+
+class WatchParty(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    movie_id: str = Field(foreign_key="movie.id")
+    movie: Optional[Movie] = Relationship(back_populates="watch_parties")
+    participants: List[User] = Relationship(
+        link_model=WatchPartyLink,
+        sa_relationship_kwargs={
+            "primaryjoin": "WatchParty.id==WatchPartyLink.party_id",
+            "secondaryjoin": "User.id==WatchPartyLink.user_id",
+        },
+    )
 
 
 # FACADE CLASS
@@ -273,7 +303,7 @@ class DatabaseFacade:
     def get_movie_ratings(self, movie: Movie):
         with Session(self._engine) as session:
             session.add(movie)
-            ratings = []
+            ratings: list[dict] = []
             for rating in movie.ratings:
                 rd = rating.dict()
                 if rating.user is not None:
@@ -290,3 +320,6 @@ class DatabaseFacade:
             if movie is None:
                 raise UserError("Movie must be added to database")
             return movie
+
+    def schedule_watch_party(self, movie: Movie, scheduler: User, invitees: list[User]):
+        pass
