@@ -38,7 +38,7 @@ class Broker:
         self._ctx = ChannelContext(host, port, username, password)
         self._timeout = timeout
 
-    def send_msg(self, routing_key: str, body: dict) -> dict[str, Any]:
+    def send_msg(self, routing_key: str, body: dict[str, Any] = {}) -> dict[str, Any]:
         body_str = json.dumps(body, seperators=(",", ":"))
         with self._ctx as channel:
             channel.basic_publish(
