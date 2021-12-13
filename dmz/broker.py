@@ -65,7 +65,10 @@ def wrap_handler(handler: HandlerCallable):
         needs_reply = header.reply_to is not None
         reply_queue = str(header.reply_to) if needs_reply else ""
         try:
-            parsed_body = json.loads(body)
+            try:
+                parsed_body = json.loads(body)
+            except:
+                raise UserError("Invalid message body")
             if not isinstance(parsed_body, dict):
                 raise RuntimeError("Invalid request body")
             handler_reply = handler(parsed_body)
