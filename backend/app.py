@@ -2,6 +2,7 @@ import warnings
 
 from pydantic import BaseModel, EmailStr, Field
 from sqlalchemy.exc import SAWarning
+from backend.broker import UserError
 
 from broker import run_rabbit_app
 from db import DatabaseFacade
@@ -97,6 +98,7 @@ def handle_user_get_private(req_body: dict):
     reply["movie_ratings"] = db.get_user_ratings(user)
     reply["friends"] = db.get_user_friends(user)
     reply["friend_requests"] = db.get_user_friend_requests(user)
+    reply["watch_parties"] = db.get_user_watch_parties(user)
     return reply
 
 
@@ -200,24 +202,75 @@ def handle_movie_get(req_body: dict):
 # watch-party
 
 
+class WatchPartyGetReq(BaseModel):
+    token: str
+    watch_party_id: int
+
+
 def handle_watch_party_get(req_body: dict):
-    pass
+    req = WatchPartyGetReq(**req_body)
+    user = db.get_token_user(req.token)
+    watch_party = db.get_watch_party(user, req.watch_party_id)
+    return db.get_watch_party_data(watch_party)
+
+
+class WatchPartyScheduleReq(BaseModel):
+    token: str
+    movie_id: str
+    movie_length: int
+    youtube_url: str
+    participants: list[str]
 
 
 def handle_watch_party_schedule(req_body: dict):
-    pass
+    req = WatchPartyScheduleReq(**req_body)
+    scheduler = db.get_token_user(req.token)
+    friend_usernames: list[str] = [
+        friend["username"] for friend in db.get_user_friends(scheduler)
+    ]
+    for username in req.participants:
+        if username not in friend_usernames:
+            raise UserError(f"User not in friends list: {username}")
+    full_participants = set(req.participants + [scheduler.username])
+    movie = db.get_movie(req.movie_id)
+    watch_party = db.schedule_watch_party(
+        movie=movie,
+        youtube_url=req.youtube_url,
+        movie_length=req.movie_length,
+        participants=[db.get_user(username) for username in full_participants],
+    )
+    return db.get_watch_party_data(watch_party)
+
+
+class WatchPartyLeaveReq(BaseModel):
+    token: str
+    watch_party_id: int
 
 
 def handle_watch_party_leave(req_body: dict):
-    pass
+    req = WatchPartyLeaveReq(**req_body)
+    user = db.get_token_user(req.token)
+    watch_party = db.get_watch_party(user, req.watch_party_id)
+    db.leave_watch_party(watch_party, user)
+
+
+class WatchPartyPlayPauseReq(BaseModel):
+    token: str
+    watch_party_id: int
 
 
 def handle_watch_party_play(req_body: dict):
-    pass
+    req = WatchPartyPlayPauseReq(**req_body)
+    user = db.get_token_user(req.token)
+    watch_party = db.get_watch_party(user, req.watch_party_id)
+    db.play_watch_party(watch_party)
 
 
 def handle_watch_party_pause(req_body: dict):
-    pass
+    req = WatchPartyPlayPauseReq(**req_body)
+    user = db.get_token_user(req.token)
+    watch_party = db.get_watch_party(user, req.watch_party_id)
+    db.pause_watch_party(watch_party)
 
 
 # run app

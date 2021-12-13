@@ -250,9 +250,14 @@ class DatabaseFacade:
         with Session(self._engine) as session:
             session.add(user)
             return [
-                sender.dict(include={"username": ..., "display_name": ...})
-                for sender in user.friend_requests
+                friend.dict(include={"username": ..., "display_name": ...})
+                for friend in user.friends
             ]
+
+    def get_user_watch_parties(self, user: User):
+        with Session(self._engine) as session:
+            session.add(user)
+            return [self._dict_watch_party(wp) for wp in user.watch_parties]
 
     def send_friend_request(self, sender: User, recipient: User):
         with Session(self._engine) as session:
@@ -347,6 +352,11 @@ class DatabaseFacade:
                     return wp
             raise UserError("Watch party does not exist")
 
+    def get_watch_party_data(self, watch_party: WatchParty):
+        with Session(self._engine) as session:
+            session.add(watch_party)
+            return self._dict_watch_party(watch_party)
+
     def schedule_watch_party(
         self,
         movie: Movie,
@@ -396,3 +406,18 @@ class DatabaseFacade:
             session.add(watch_party)
             watch_party.participants.remove(user)
             session.commit()
+            session.refresh(watch_party)
+            if len(watch_party.participants) == 0:
+                session.delete(watch_party)
+                session.commit()
+
+    def _dict_watch_party(self, watch_party: WatchParty):
+        data = watch_party.dict(exclude={"movie_id": ...})
+        if watch_party.movie is not None:
+            data["movie"] = watch_party.movie.dict()
+        data["participants"] = [
+            participant.username
+            for participant in watch_party.participants
+            if participant is not None
+        ]
+        return data
