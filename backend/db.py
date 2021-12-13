@@ -1,7 +1,9 @@
 import hashlib
+import math
 import secrets
 from datetime import datetime, timedelta
 from typing import List, Optional
+from enum import Enum
 
 from pydantic import EmailStr
 from sqlalchemy.exc import IntegrityError
@@ -15,9 +17,9 @@ from env import EnvConfig
 
 class Movie(SQLModel, table=True):
     id: str = Field(primary_key=True)
-    title: str
+    title: str = Field(index=False)
     description: str = Field(max_length=5000, index=False)
-    year: int
+    year: int = Field(index=False)
     poster_url: str = Field(max_length=1000, index=False)
     ratings: List["MovieRating"] = Relationship(back_populates="movie")
     watch_parties: List["WatchParty"] = Relationship(back_populates="movie")
@@ -32,8 +34,8 @@ class MovieRating(SQLModel, table=True):
     )
     movie: Optional[Movie] = Relationship(back_populates="ratings")
     user: Optional["User"] = Relationship(back_populates="movie_ratings")
-    stars: int = Field(ge=1, le=5)
-    comment: str = Field(default="", max_length=350)
+    stars: int = Field(ge=1, le=5, index=False)
+    comment: str = Field(default="", max_length=350, index=False)
 
 
 class FriendRequest(SQLModel, table=True):
@@ -57,8 +59,8 @@ class FriendLink(SQLModel, table=True):
 class User(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     username: str = Field(index=True, sa_column_kwargs={"unique": True})
-    display_name: str
-    bio: str = Field(default="")
+    display_name: str = Field(index=False)
+    bio: str = Field(default="", index=False)
 
     movie_ratings: List[MovieRating] = Relationship(back_populates="user")
     friends: List["User"] = Relationship(
@@ -95,11 +97,15 @@ class User(SQLModel, table=True):
         return test_hash == self.password_hash
 
 
+def token_exp_factory():
+    return datetime.utcnow() + timedelta(hours=12)
+
+
 class AuthToken(SQLModel, table=True):
     token: str = Field(default=None, primary_key=True)
-    user_id: int = Field(foreign_key="user.id")
+    user_id: int = Field(foreign_key="user.id", index=False)
     user: User = Relationship(back_populates="tokens")
-    expiration_date: datetime = datetime.utcnow() + timedelta(1)
+    expiration_date: datetime = Field(default_factory=token_exp_factory, index=False)
 
 
 class WatchPartyLink(SQLModel, table=True):
@@ -111,9 +117,21 @@ class WatchPartyLink(SQLModel, table=True):
     )
 
 
+class WatchPartyStatus(str, Enum):
+    PLAYING = "playing"
+    PAUSED = "paused"
+
+
 class WatchParty(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
-    movie_id: str = Field(foreign_key="movie.id")
+    movie_id: str = Field(foreign_key="movie.id", index=False)
+    youtube_url: str
+    movie_length: int = Field(index=False)
+
+    status: WatchPartyStatus = Field(default=WatchPartyStatus.PAUSED, index=False)
+    last_play: datetime = Field(default_factory=datetime.utcnow)
+    pause_time: int = Field(default=0, ge=0, le=45000, index=False)
+
     movie: Optional[Movie] = Relationship(back_populates="watch_parties")
     participants: List[User] = Relationship(
         link_model=WatchPartyLink,
@@ -321,5 +339,60 @@ class DatabaseFacade:
                 raise UserError("Movie must be added to database")
             return movie
 
-    def schedule_watch_party(self, movie: Movie, scheduler: User, invitees: list[User]):
-        pass
+    def get_watch_party(self, user: User, watch_party_id: int):
+        with Session(self._engine) as session:
+            session.add(user)
+            for wp in user.watch_parties:
+                if wp.id == watch_party_id:
+                    return wp
+            raise UserError("Watch party does not exist")
+
+    def schedule_watch_party(
+        self,
+        movie: Movie,
+        youtube_url: str,
+        movie_length: int,
+        participants: list[User],
+    ):
+        with Session(self._engine) as session:
+            new_wp = WatchParty(
+                movie_id=movie.id, movie_length=movie_length, youtube_url=youtube_url
+            )
+            session.add(new_wp)
+            for participant in participants:
+                new_wp.participants.append(participant)
+            session.commit()
+            session.refresh(new_wp)
+            return new_wp
+
+    def pause_watch_party(self, watch_party: WatchParty):
+        with Session(self._engine) as session:
+            session.add(watch_party)
+            session.refresh(watch_party)
+            if watch_party.status == WatchPartyStatus.PAUSED:
+                raise UserError("Movie is already paused")
+            watch_party.status = WatchPartyStatus.PAUSED
+            time_passed = datetime.utcnow() - watch_party.last_play
+            seconds_passed = watch_party.pause_time + math.trunc(
+                time_passed.total_seconds()
+            )
+            watch_party.pause_time = (
+                seconds_passed if seconds_passed < watch_party.movie_length else 0
+            )
+            session.commit()
+
+    def play_watch_party(self, watch_party: WatchParty):
+        with Session(self._engine) as session:
+            session.add(watch_party)
+            session.refresh(watch_party)
+            if watch_party.status == WatchPartyStatus.PLAYING:
+                raise UserError("Movie is already playing")
+            watch_party.status = WatchPartyStatus.PLAYING
+            watch_party.last_play = datetime.utcnow()
+            session.commit()
+
+    def leave_watch_party(self, watch_party: WatchParty, user: User):
+        with Session(self._engine) as session:
+            session.add(watch_party)
+            watch_party.participants.remove(user)
+            session.commit()

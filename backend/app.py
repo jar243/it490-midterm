@@ -197,6 +197,29 @@ def handle_movie_get(req_body: dict):
     return movie_dict
 
 
+# watch-party
+
+
+def handle_watch_party_get(req_body: dict):
+    pass
+
+
+def handle_watch_party_schedule(req_body: dict):
+    pass
+
+
+def handle_watch_party_leave(req_body: dict):
+    pass
+
+
+def handle_watch_party_play(req_body: dict):
+    pass
+
+
+def handle_watch_party_pause(req_body: dict):
+    pass
+
+
 # run app
 
 
@@ -217,6 +240,11 @@ def main():
         "db.review.submit": handle_review_submit,
         "db.movie.add": handle_movie_add,
         "db.movie.get": handle_movie_get,
+        "db.watch-party.get": handle_watch_party_get,
+        "db.watch-party.schedule": handle_watch_party_schedule,
+        "db.watch-party.leave": handle_watch_party_leave,
+        "db.watch-party.play": handle_watch_party_play,
+        "db.watch-party.pause": handle_watch_party_pause,
     }
 
     cfg = EnvConfig()
