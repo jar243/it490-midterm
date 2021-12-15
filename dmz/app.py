@@ -1,9 +1,10 @@
 import json
 
 import requests
-from pydantic import BaseSettings
+from pydantic import BaseSettings, BaseModel
 
 from broker import UserError, run_rabbit_app
+from youtube import YoutubeDataApi
 
 
 class EnvConfig(BaseSettings):
@@ -12,6 +13,7 @@ class EnvConfig(BaseSettings):
     broker_user: str = "guest"
     broker_password: str = "guest"
     tmdb_api_key: str = "291050bd6f830358af2856e014e9dec6"
+    youtube_api_key: str
 
     class Config:
         env_file = ".env"
@@ -112,17 +114,37 @@ def handle_popular_movies(req_body: dict):
     return {"movies": results}
 
 
+youtube_api: YoutubeDataApi
+
+
+class YoutubeMovieReq(BaseModel):
+    movie_title: str
+
+
+def handle_get_youtube_movie(req_body: dict):
+    req = YoutubeMovieReq(**req_body)
+    search_result = youtube_api.search_movie(req.movie_title)
+    if search_result is None:
+        UserError("Movie is not available on Youtube Movies")
+    
+
+
 def main():
     routes = {
         "api.movies.get": handle_movies_get,
         "api.movies.search": handle_movies_search,
         "api.trending.movies": handle_trending_movies,
         "api.popular.movies": handle_popular_movies,
+        "api.youtube.get-movie": handle_get_youtube_movie,
     }
 
-    global api
     config = EnvConfig()
+
+    global api
     api = MoviesApi(config.tmdb_api_key)
+
+    global youtube_api
+    youtube_api = YoutubeDataApi(config.youtube_api_key)
 
     run_rabbit_app("backend-api", "127.0.0.1", 5672, "guest", "guest", routes)
 
