@@ -251,4 +251,67 @@ class RabbitClient
             ]
         );
     }
+
+    public function get_watch_party(string $token, int $watch_party_id)
+    {
+        return $this->publish(
+            'db.watch-party.get',
+            [
+                'token' => $token,
+                'watch_party_id' => $watch_party_id
+            ]
+        );
+    }
+
+    public function schedule_watch_party(
+        string $token,
+        string $movie_id,
+        int $movie_length,
+        string $youtube_url,
+        array $participants
+    ) {
+        return $this->publish(
+            'db.watch-party.get',
+            [
+                'token' => $token,
+                'movie_id' => $movie_id,
+                'movie_length' => $movie_length,
+                'youtube_url' => $youtube_url,
+                '$participants' => $participants
+            ]
+        );
+    }
+
+    public function leave_watch_party(string $token, int $watch_party_id)
+    {
+        return $this->publish(
+            'db.watch-party.leave',
+            [
+                'token' => $token,
+                'watch_party_id' => $watch_party_id
+            ]
+        );
+    }
+
+    public function play_watch_party(string $token, int $watch_party_id)
+    {
+        return $this->publish(
+            'db.watch-party.play',
+            [
+                'token' => $token,
+                'watch_party_id' => $watch_party_id
+            ]
+        );
+    }
+
+    public function pause_watch_party(string $token, int $watch_party_id)
+    {
+        return $this->publish(
+            'db.watch-party.pause',
+            [
+                'token' => $token,
+                'watch_party_id' => $watch_party_id
+            ]
+        );
+    }
 }
