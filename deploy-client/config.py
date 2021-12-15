@@ -33,7 +33,7 @@ def write_config(cfg: ClientConfig):
         json.dump(cfg.dict(), fl, indent=4)
 
 
-app = typer.Typer()
+app = typer.Typer(short_help="Configure Client")
 
 
 @app.command()
