@@ -1,8 +1,9 @@
-import requests
 import json
 
+import requests
 from pydantic import BaseSettings
-from broker import run_rabbit_app, UserError
+
+from broker import UserError, run_rabbit_app
 
 
 class EnvConfig(BaseSettings):
