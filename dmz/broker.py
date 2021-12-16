@@ -91,7 +91,7 @@ def declare_queue(channel: Channel, queue_name: str, handler: Callable):
     wrapped_handler = wrap_handler(handler)
 
     def callback(frame):
-        channel.basic_consume(queue_name, wrapped_handler)
+        channel.basic_consume(queue_name, wrapped_handler, auto_ack=True)
 
     channel.queue_declare(queue_name, callback=callback)
 
