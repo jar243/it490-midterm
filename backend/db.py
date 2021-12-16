@@ -16,6 +16,15 @@ from email_facade import EmailFacade
 # TABLE MODELS
 
 
+class FavoriteMovieLink(SQLModel, table=True):
+    user_id: Optional[int] = Field(
+        default=None, primary_key=True, foreign_key="user.id"
+    )
+    movie_id: Optional[str] = Field(
+        default=None, foreign_key="movie.id", primary_key=True
+    )
+
+
 class WatchPartyLink(SQLModel, table=True):
     party_id: Optional[int] = Field(
         default=None, primary_key=True, foreign_key="watchparty.id"
@@ -96,6 +105,13 @@ class User(SQLModel, table=True):
         sa_relationship_kwargs={
             "primaryjoin": "User.id==WatchPartyLink.user_id",
             "secondaryjoin": "WatchParty.id==WatchPartyLink.party_id",
+        },
+    )
+    favorites: List[Movie] = Relationship(
+        link_model=FavoriteMovieLink,
+        sa_relationship_kwargs={
+            "primaryjoin": "User.id==FavoriteMovieLink.user_id",
+            "secondaryjoin": "Movie.id==FavoriteMovieLink.movie_id",
         },
     )
 
@@ -271,6 +287,14 @@ class DatabaseFacade:
             session.add(user)
             return [self._dict_watch_party(wp) for wp in user.watch_parties]
 
+    def get_user_favorites(self, user: User):
+        with Session(self._engine) as session:
+            session.add(user)
+            return [
+                movie.dict(include={"id": ..., "title": ..., "poster_url": ...})
+                for movie in user.favorites
+            ]
+
     def send_friend_request(self, sender: User, recipient: User):
         with Session(self._engine) as session:
             session.add(sender)
@@ -322,8 +346,6 @@ class DatabaseFacade:
             except IntegrityError as err:
                 if err.orig.args[0] == 1062:
                     pass
-            session.refresh(movie)
-            session.refresh(user)
 
     def add_movie(self, **kwargs):
         with Session(self._engine) as session:
@@ -440,6 +462,26 @@ class DatabaseFacade:
             if len(watch_party.participants) == 0:
                 session.delete(watch_party)
                 session.commit()
+
+    def add_favorite(self, user: User, movie: Movie):
+        with Session(self._engine) as session:
+            session.add(user)
+            for fav_movie in user.favorites:
+                if fav_movie.id == movie.id:
+                    raise UserError("Movie already added to favorites!")
+            user.favorites.append(movie)
+            session.commit()
+            session.refresh(user)
+
+    def remove_favorite(self, user: User, movie: Movie):
+        with Session(self._engine) as session:
+            session.add(user)
+            try:
+                user.favorites.remove(movie)
+            except ValueError:
+                raise UserError("Movie is not in your favorites")
+            session.commit()
+            session.refresh(user)
 
     def _dict_watch_party(self, watch_party: WatchParty):
         data = watch_party.dict(

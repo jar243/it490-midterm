@@ -67,6 +67,9 @@ endif; ?>
             </div>
             <ul class="list-group list-group-flush">
                 <li class="list-group-item"><?= count($user->movie_ratings) ?> Movie Ratings</li>
+                <li class="list-group-item">
+                    <a href="/favorites.php?username=<?= $user->username ?>"><?= count($user->favorites) ?> Favorites</a>
+                </li>
                 <?php if (strlen($user->bio) > 0) : ?>
                     <li class="list-group-item"><?= $user->bio ?></li>
                 <?php endif; ?>

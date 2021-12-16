@@ -3,41 +3,94 @@ include('protected/header.php');
 
 $err_msg = null;
 
-if (isset($_GET['id'])) {
+while (true) {
+    if (!isset($_GET['id'])) {
+        $err_msg = 'No movie ID supplied';
+        break;
+    }
     $movie_id = $_GET['id'];
+
     $res = $rc->get_movie($movie_id);
     if ($res->is_error) {
         $err_msg = $res->msg;
-    } else {
-        $movie = $res;
-        $has_ratings = property_exists($movie, 'ratings') && count($movie->ratings) > 0;
+        break;
+    }
+    $movie = $res;
+    $has_ratings = property_exists($movie, 'ratings') && count($movie->ratings) > 0;
 
-        $able_to_rate = false;
-        if (!is_null($active_user)) {
-            $able_to_rate = true;
-            $res = $rc->user_get_private($token);
-            if ($res->is_error) {
-                $err_msg = $res->msg;
-            } else {
-                foreach ($res->movie_ratings as $rating) {
-                    if ($rating->movie->id == $movie->id) {
-                        $able_to_rate = false;
-                        break;
-                    }
-                }
+    $able_to_rate = false;
+    if (!is_null($active_user)) {
+        $able_to_rate = true;
+        $res = $rc->user_get_private($token);
+        if ($res->is_error) {
+            $err_msg = $res->msg;
+            break;
+        }
+        foreach ($res->movie_ratings as $rating) {
+            if ($rating->movie->id == $movie->id) {
+                $able_to_rate = false;
+                break;
             }
         }
     }
-} else {
-    $err_msg = 'No movie ID supplied';
-}
 
-if (is_null($err_msg) && isset($_POST['submit_review'])) {
-    $stars = $_POST['stars'];
-    $comment = $_POST['comment'];
-    $res = $rc->submit_review($token, $movie->id, $stars, $comment);
-    header("location: /movie.php?id=$movie->id");
-    exit();
+    if (isset($_POST['submit_review'])) {
+        if (!$able_to_rate) {
+            $err_msg = "You have already rated this movie";
+            break;
+        }
+        $stars = $_POST['stars'];
+        $comment = $_POST['comment'];
+        $res = $rc->submit_review($token, $movie->id, $stars, $comment);
+        if ($res->is_error) {
+            $err_msg = $res->msg;
+            break;
+        }
+        header("location: /movie.php?id=$movie->id");
+        exit();
+    } elseif (isset($_POST['favorite'])) {
+        if (!$is_logged_in) {
+            $err_msg = "You must be logged in to favorite";
+            break;
+        }
+        $res = $rc->favorite_movie($token, $movie->id);
+        if ($res->is_error) {
+            $err_msg = $res->msg;
+            break;
+        }
+        header("location: /movie.php?id=$movie->id");
+        exit();
+    } elseif (isset($_POST['unfavorite'])) {
+        if (!$is_logged_in) {
+            $err_msg = "You must be logged in to unfavorite";
+            break;
+        }
+        $res = $rc->unfavorite_movie($token, $movie->id);
+        if ($res->is_error) {
+            $err_msg = $res->msg;
+            break;
+        }
+        header("location: /movie.php?id=$movie->id");
+        exit();
+    }
+
+    $is_favorited = false;
+    if (!is_null($active_user)) {
+        $res = $rc->user_get_private($token);
+        if ($res->is_error) {
+            $err_msg = $res->msg;
+            break;
+        }
+        $active_user = $res;
+        foreach ($active_user->favorites as $fav_movie) {
+            if ($fav_movie->id === $movie->id) {
+                $is_favorited = true;
+                break;
+            }
+        }
+    }
+
+    break;
 }
 
 if (!is_null($err_msg)) : ?>
@@ -53,6 +106,13 @@ endif;
     <div class="col-md-4">
         <?php if ($is_logged_in) : ?>
             <a class="btn btn-success mb-2" style="width: 100%;" href="/create-watch-party.php?movie_id=<?= $movie->id ?>">Create Watch Party</a>
+            <form method="POST" class="mb-2">
+                <?php if ($is_favorited) : ?>
+                    <input class="btn btn-warning" style="width: 100%;" type="submit" name="unfavorite" value="Unfavorite">
+                <?php else : ?>
+                    <input class="btn btn-outline-warning" style="width: 100%;" type="submit" name="favorite" value="Favorite">
+                <?php endif; ?>
+            </form>
         <?php endif; ?>
         <div class="card mb-3">
             <img src="<?= $movie->poster_url ?>" class='card-img-top'>

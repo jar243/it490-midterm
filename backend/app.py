@@ -86,6 +86,7 @@ def handle_user_get_public(req_body: dict):
     rq = UserGetPublicRequest(**req_body)
     user = db.get_user(rq.username)
     reply = user.dict(include={"username": ..., "display_name": ..., "bio": ...})
+    reply["favorites"] = db.get_user_favorites(user)
     reply["movie_ratings"] = db.get_user_ratings(user)
     reply["friends"] = db.get_user_friends(user)
     return reply
@@ -99,6 +100,7 @@ def handle_user_get_private(req_body: dict):
     reply["friends"] = db.get_user_friends(user)
     reply["friend_requests"] = db.get_user_friend_requests(user)
     reply["watch_parties"] = db.get_user_watch_parties(user)
+    reply["favorites"] = db.get_user_favorites(user)
     return reply
 
 
@@ -272,6 +274,28 @@ def handle_watch_party_pause(req_body: dict):
     db.pause_watch_party(watch_party)
 
 
+# favorites
+
+
+class FavoriteReq(BaseModel):
+    token: str
+    movie_id: str
+
+
+def handle_add_favorite(req_body: dict):
+    rq = FavoriteReq(**req_body)
+    user = db.get_token_user(rq.token)
+    movie = db.get_movie(rq.movie_id)
+    db.add_favorite(user, movie)
+
+
+def handle_remove_favorite(req_body: dict):
+    rq = FavoriteReq(**req_body)
+    user = db.get_token_user(rq.token)
+    movie = db.get_movie(rq.movie_id)
+    db.remove_favorite(user, movie)
+
+
 # run app
 
 
@@ -297,6 +321,8 @@ def main():
         "db.watch-party.leave": handle_watch_party_leave,
         "db.watch-party.play": handle_watch_party_play,
         "db.watch-party.pause": handle_watch_party_pause,
+        "db.favorite.add": handle_add_favorite,
+        "db.favorite.remove": handle_remove_favorite,
     }
 
     cfg = EnvConfig()

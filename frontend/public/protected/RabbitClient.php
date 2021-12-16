@@ -322,4 +322,26 @@ class RabbitClient
             ]
         );
     }
+
+    public function favorite_movie(string $token, int $movie_id)
+    {
+        return $this->publish(
+            'db.favorite.add',
+            [
+                'token' => $token,
+                'movie_id' => $movie_id
+            ]
+        );
+    }
+
+    public function unfavorite_movie(string $token, int $movie_id)
+    {
+        return $this->publish(
+            'db.favorite.remove',
+            [
+                'token' => $token,
+                'movie_id' => $movie_id
+            ]
+        );
+    }
 }
