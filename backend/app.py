@@ -308,7 +308,7 @@ def main():
     email = EmailFacade(cfg.email_addr)
 
     run_rabbit_app(
-        "backend-db",
+        "backend",
         cfg.broker_host,
         cfg.broker_port,
         cfg.broker_user,
