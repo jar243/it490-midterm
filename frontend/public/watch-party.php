@@ -29,7 +29,7 @@ if (!is_null($err_msg)) {
     if ($res->is_error) {
         $btn_err_msg = $res->msg;
     } else {
-        header("location: /");
+        header("location: /profile.php?username=$active_user->username");
         exit();
     }
 } else if (isset($_POST['play'])) {

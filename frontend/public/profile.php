@@ -40,6 +40,16 @@ if (isset($_POST['accept_friend']) || isset($_POST['decline_friend'])) {
     exit();
 }
 
+if (isset($_POST['leave_watch_party'])) {
+    $watch_party_id = $_POST['wp_id'];
+    $res = $rc->leave_watch_party($token, $watch_party_id);
+    if ($res->is_error) {
+        $friend_request_msg = $res->msg;
+    }
+    header("Refresh:0");
+    exit();
+}
+
 if (!is_null($err_msg)) : ?>
     <div class="alert alert-danger mx-auto" style="max-width:500px;"><?= $err_msg ?></div>
 <?php
@@ -110,8 +120,25 @@ endif; ?>
                     <?php endforeach; ?>
                 </ul>
             </div>
+        <?php endif;
+        if ($is_active_user && count($user->watch_parties) > 0) : ?>
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h4 class='mb-0'>Watch Parties</h4>
+                </div>
+                <ul class="list-group list-group-flush">
+                    <?php foreach ($user->watch_parties as $wp) : ?>
+                        <li class="list-group-item d-flex align-items-center">
+                            <a href="/watch-party.php?id=<?= $wp->id ?>" class='d-flex'><?= $wp->movie->title ?></a>
+                            <form method="POST" class="ml-auto">
+                                <input type="hidden" name='wp_id' value="<?= $wp->id ?>">
+                                <input class="btn btn-danger btn-sm" type="submit" name="leave_watch_party" value="Leave Party">
+                            </form>
+                        </li>
+                    <?php endforeach; ?>
+                </ul>
+            </div>
         <?php endif; ?>
-
         <div class="card mb-3">
             <div class="card-header">
                 <h4 class='mb-0'>Friends</h4>
