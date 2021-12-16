@@ -40,7 +40,7 @@ class YoutubeDataApi:
 
     def search_movie(self, query: str):
         params = {
-            "q": f"{query} movie",
+            "q": query,
             "part": "id,snippet",
             "type": "video",
             "videoType": "movie",
@@ -66,10 +66,13 @@ class YoutubeDataApi:
             )
         if len(results) == 0:
             return None
+        result = results[0]
         for movie in results:
             if movie.channel_id == self._movies_channel_id:
-                return movie
-        return results[0]
+                result = movie
+        if result.video_title.lower() != query.lower():
+            return None
+        return result
 
     def get_video_details(self, video_id: str):
         # YouTube does not let u access length of movies :((
