@@ -20,6 +20,28 @@ if (isset($_GET['id'])) {
     $err_msg = 'No movie id supplied';
 }
 
+if (!is_null($err_msg)) {
+    // pass
+} else if (isset($_POST['leave'])) {
+    $res = $rc->leave_watch_party($token, $party_id);
+    if ($res->is_error) {
+        $err_msg = $res->msg;
+    } else {
+        header("location: /");
+        exit();
+    }
+} else if (isset($_POST['play'])) {
+    $res = $rc->play_watch_party($token, $party_id);
+    if ($res->is_error) {
+        $err_msg = $res->msg;
+    }
+} else if (isset($_POST['pause'])) {
+    $res = $rc->pause_watch_party($token, $party_id);
+    if ($res->is_error) {
+        $err_msg = $res->msg;
+    }
+}
+
 if (!is_null($err_msg)) : ?>
     <div class="alert alert-danger mx-auto" style="max-width:500px;"><?= $err_msg ?></div>
 <?php elseif (isset($watch_party)) :
