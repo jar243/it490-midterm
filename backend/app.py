@@ -272,6 +272,28 @@ def handle_watch_party_pause(req_body: dict):
     db.pause_watch_party(watch_party)
 
 
+# favorites
+
+
+class FavoriteReq(BaseModel):
+    token: str
+    movie_id: str
+
+
+def handle_add_favorite(req_body: dict):
+    rq = FavoriteReq(**req_body)
+    user = db.get_token_user(rq.token)
+    movie = db.get_movie(rq.movie_id)
+    db.add_favorite(user, movie)
+
+
+def handle_remove_favorite(req_body: dict):
+    rq = FavoriteReq(**req_body)
+    user = db.get_token_user(rq.token)
+    movie = db.get_movie(rq.movie_id)
+    db.remove_favorite(user, movie)
+
+
 # run app
 
 
@@ -297,6 +319,8 @@ def main():
         "db.watch-party.leave": handle_watch_party_leave,
         "db.watch-party.play": handle_watch_party_play,
         "db.watch-party.pause": handle_watch_party_pause,
+        "db.favorite.add": handle_add_favorite,
+        "db.favorite.remove": handle_remove_favorite,
     }
 
     cfg = EnvConfig()
