@@ -373,12 +373,16 @@ class DatabaseFacade:
             email.send(
                 emails,
                 f"Watch Party Invite: {watch_party.movie.title}",
-                f"""Hello there!
-                
-                You've been invited to watch {watch_party.movie.title}!
-                
-                Description:
-                {watch_party.movie.description}""",
+                "\n".join(
+                    [
+                        "Hello there!",
+                        "",
+                        f"You've been invited to watch {watch_party.movie.title}!",
+                        "",
+                        "Description:",
+                        watch_party.movie.description,
+                    ]
+                ),
             )
 
     def get_watch_party_data(self, watch_party: WatchParty):
