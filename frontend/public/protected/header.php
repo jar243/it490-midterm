@@ -27,7 +27,7 @@ $is_logged_in = !is_null($active_user);
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Movies App</title>
+  <title>Movie World</title>
   <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
 </head>
 
@@ -36,7 +36,7 @@ $is_logged_in = !is_null($active_user);
   <nav class="navbar navbar-dark bg-dark navbar-expand-lg mb-3">
     <div class='container-fluid' style="max-width: 1500px;">
 
-      <div class="navbar-brand">Movies App</div>
+      <div class="navbar-brand">Movie World</div>
 
       <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarToggleTarget">
         <span class="navbar-toggler-icon"></span>
