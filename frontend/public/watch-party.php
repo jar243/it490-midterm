@@ -53,11 +53,11 @@ if (!is_null($err_msg)) : ?>
         $status_change_msg = "Pause";
         $player_url = $player_url . "&autoplay=1";
     }
+    echo var_dump($watch_party->movie->runtime);
 ?>
     <div class="row g-3">
         <div class="col-md-3">
             <div class="card mb-3">
-                <img src="<?= $movie->poster_url ?>" class='card-img-top'>
                 <div class="card-body">
                     <h2 class="card-title"><?= $watch_party->movie->title ?></h2>
                 </div>
@@ -77,7 +77,6 @@ if (!is_null($err_msg)) : ?>
                 </ul>
                 <div class="card-body">
                     <form method="POST" class="d-flex">
-                        <input class="btn btn-primary" type="submit" name="<?= strtolower($status_change_msg) ?>" value="<?= $status_change_msg ?>">
                         <input class="btn btn-danger" type="submit" name="leave" value="Leave Party">
                     </form>
                 </div>
@@ -87,7 +86,7 @@ if (!is_null($err_msg)) : ?>
             <?php endif; ?>
         </div>
         <div class="col-md-9">
-            <iframe style="width: 100%;" id="ytplayer" type="text/html" src="<?= $player_url ?>" frameborder="0">
+            <iframe style="width: 100%; height: 600px;" id="ytplayer" type="text/html" src="<?= $player_url ?>" frameborder="0">
             </iframe>
         </div>
     </div>
