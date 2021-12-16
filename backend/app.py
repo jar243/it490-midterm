@@ -86,6 +86,7 @@ def handle_user_get_public(req_body: dict):
     rq = UserGetPublicRequest(**req_body)
     user = db.get_user(rq.username)
     reply = user.dict(include={"username": ..., "display_name": ..., "bio": ...})
+    reply["favorites"] = db.get_user_favorites(user)
     reply["movie_ratings"] = db.get_user_ratings(user)
     reply["friends"] = db.get_user_friends(user)
     return reply
@@ -99,6 +100,7 @@ def handle_user_get_private(req_body: dict):
     reply["friends"] = db.get_user_friends(user)
     reply["friend_requests"] = db.get_user_friend_requests(user)
     reply["watch_parties"] = db.get_user_watch_parties(user)
+    reply["favorites"] = db.get_user_favorites(user)
     return reply
 
 

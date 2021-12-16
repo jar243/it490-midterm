@@ -291,7 +291,7 @@ class DatabaseFacade:
         with Session(self._engine) as session:
             session.add(user)
             return [
-                movie.dict(include={"id": ..., "title": ...})
+                movie.dict(include={"id": ..., "title": ..., "poster_url": ...})
                 for movie in user.favorites
             ]
 
