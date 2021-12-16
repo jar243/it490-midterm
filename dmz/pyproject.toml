@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "it490-backend-api"
+name = "it490-dmz"
 version = "0.1.0"
 description = ""
 authors = ["Swapnil62 <sp2428@njit.edu>"]

@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "it490-backend-db"
+name = "it490-backend"
 version = "0.1.0"
 description = ""
 authors = ["Your Name <you@example.com>"]
