@@ -346,8 +346,6 @@ class DatabaseFacade:
             except IntegrityError as err:
                 if err.orig.args[0] == 1062:
                     pass
-            session.refresh(movie)
-            session.refresh(user)
 
     def add_movie(self, **kwargs):
         with Session(self._engine) as session:
