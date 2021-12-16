@@ -1,0 +1,19 @@
+node 1: node1
+node 2: node2
+primitive freeradius lsb:freeradius \
+	op monitor interval=5s timeout=15s \
+	op start interval=0 timeout=15s \
+	op stop interval=0 timeout=15s \
+	meta target-role=Started
+primitive vip1 IPaddr2 \
+	params ip=10.147.18.112 nic=ztyourochb \
+	op monitor interval=10s
+clone freeradius-clone freeradius
+colocation vip1-freeradius inf: vip1 freeradius-clone
+property cib-bootstrap-options: \
+	have-watchdog=false \
+	dc-version=2.0.3-4b1f869f0f \
+	cluster-infrastructure=corosync \
+	cluster-name=debian \
+	stonith-enabled=false \
+	no-quorum-policy=ignore
