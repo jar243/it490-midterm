@@ -51,15 +51,16 @@ endif;
 
 <div class="row g-3">
     <div class="col-md-4">
+        <?php if ($is_logged_in) : ?>
+            <a class="btn btn-success mb-2" style="width: 100%;" href="/create-watch-party.php?movie_id=<?= $movie->id ?>">Create Watch Party</a>
+        <?php endif; ?>
         <div class="card mb-3">
             <img src="<?= $movie->poster_url ?>" class='card-img-top'>
             <div class="card-body">
                 <h2 class="card-title"><?= $movie->title ?></h2>
                 <h5 class="card-subtitle text-muted"><?= $movie->year ?></h5>
                 <p class="card-text mt-2"><?= $movie->description ?></p>
-                <?php if ($is_logged_in) : ?>
-                    <a href="/create-watch-party.php?movie_id=<?= $movie->id ?>"></a>
-                <?php endif; ?>
+
             </div>
         </div>
     </div>

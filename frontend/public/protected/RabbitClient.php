@@ -266,16 +266,14 @@ class RabbitClient
     public function schedule_watch_party(
         string $token,
         string $movie_id,
-        int $movie_length,
         string $youtube_id,
         array $participants
     ) {
         return $this->publish(
-            'db.watch-party.get',
+            'db.watch-party.schedule',
             [
                 'token' => $token,
                 'movie_id' => $movie_id,
-                'movie_length' => $movie_length,
                 'youtube_id' => $youtube_id,
                 'participants' => $participants
             ]

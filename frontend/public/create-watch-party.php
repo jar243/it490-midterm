@@ -13,6 +13,7 @@ while (true) {
         header("location: /");
         exit();
     }
+    $movie_id = $_GET['movie_id'];
 
     $res = $rc->user_get_private($token);
     if ($res->is_error) {
@@ -20,6 +21,11 @@ while (true) {
         break;
     }
     $active_user = $res;
+
+    if (count($active_user->friends) === 0) {
+        $err_msg = "You have no friends to invite to a watch party!";
+        break;
+    }
 
     if (!isset($_POST['create'])) {
         break;
@@ -45,13 +51,11 @@ while (true) {
             break;
         }
         $movie->youtube_id = $res->youtube_id;
-        $movie->youtube_length = $res->youtube_length;
     }
 
     $res = $rc->schedule_watch_party(
         $token,
         $movie_id,
-        $movie->youtube_length,
         $movie->youtube_id,
         $participants
     );
