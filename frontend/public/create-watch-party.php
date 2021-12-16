@@ -75,14 +75,17 @@ while (true) {
         <?php if (!is_null($err_msg)) : ?>
             <div class="alert alert-danger"><?= $err_msg ?></div>
         <?php endif; ?>
-        <h4 class="card-title">Create Watch Party</h4>
+        <h4 class="card-title">Create a Watch Party</h4>
+        <h6 class="card-subtitle text-muted">Select the friends you'd like to invite</h6>
         <form method="POST">
+            <div class="my-4">
             <?php foreach ($active_user->friends as $friend) : ?>
                 <div class="form-check">
                     <input class="form-check-input" type="checkbox" name="participants[]" value="<?= $friend->username ?>">
                     <label class="form-check-label"><?= $friend->display_name ?></label>
                 </div>
             <?php endforeach; ?>
+            </div>
             <input class="btn btn-success" type="submit" name="create" value="Create">
         </form>
     </div>

@@ -53,7 +53,6 @@ if (!is_null($err_msg)) : ?>
         $status_change_msg = "Pause";
         $player_url = $player_url . "&autoplay=1";
     }
-    echo var_dump($watch_party->movie->runtime);
 ?>
     <div class="row g-3">
         <div class="col-md-3">
