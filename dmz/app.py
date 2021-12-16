@@ -12,7 +12,7 @@ class EnvConfig(BaseSettings):
     broker_port: int = 5672
     broker_user: str = "guest"
     broker_password: str = "guest"
-    tmdb_api_key: str = "291050bd6f830358af2856e014e9dec6"
+    tmdb_api_key: str
     youtube_api_key: str
 
     class Config:
