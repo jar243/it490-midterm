@@ -70,8 +70,6 @@ class YoutubeDataApi:
         for movie in results:
             if movie.channel_id == self._movies_channel_id:
                 result = movie
-        if result.video_title.lower() != query.lower():
-            return None
         return result
 
     def get_video_details(self, video_id: str):
