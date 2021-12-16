@@ -50,7 +50,7 @@ class YoutubeDataApi:
         }
         res = self._get("search", params)
         if res.status_code != 200:
-            raise RuntimeError("Request failed")
+            raise RuntimeError(f"Status {res.status_code}: {res.reason}")
         res_obj = json.loads(res.content)
         results: list[SearchResult] = []
         for result_item in res_obj["items"]:
@@ -72,17 +72,19 @@ class YoutubeDataApi:
         return results[0]
 
     def get_video_details(self, video_id: str):
+        # YouTube does not let u access length of movies :((
+        # Responding with a default value of 3 hours
+        return VideoDetails(3 * 60 * 60)
         params = {
             "id": video_id,
             "part": "fileDetails",
         }
         res = self._get("videos", params)
         if res.status_code != 200:
-            raise RuntimeError("Request failed")
+            raise RuntimeError(f"Status {res.status_code}: {res.reason}")
         res_obj = json.loads(res.content)
         videos: list = res_obj["items"]
         if len(videos) == 0:
             return None
         video = videos[0]
         duration_sec = math.trunc(video["fileDetails"]["durationMs"] / 1000)
-        return VideoDetails(duration_sec)

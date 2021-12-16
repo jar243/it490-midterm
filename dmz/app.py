@@ -31,7 +31,7 @@ class MoviesApi:
             "id": raw_movie["id"],
             "title": raw_movie["title"],
             "description": raw_movie["overview"],
-            # "genre_ids": raw_movie["genre_ids"],
+            "runtime": raw_movie.get("runtime", 2 * 60) * 60,
             "year": raw_movie.get("release_date", "0000")[:4],
             "poster_url": f"{self._image_url}{raw_movie['poster_path'][1:]}",
         }
@@ -125,8 +125,14 @@ def handle_get_youtube_movie(req_body: dict):
     req = YoutubeMovieReq(**req_body)
     search_result = youtube_api.search_movie(req.movie_title)
     if search_result is None:
-        UserError("Movie is not available on Youtube Movies")
-    
+        raise UserError("Movie is not available on Youtube Movies")
+    details = youtube_api.get_video_details(search_result.video_id)
+    if details is None:
+        raise UserError("Movie is not available on Youtube Movies")
+    return {
+        "youtube_id": search_result.video_id,
+        "youtube_length": details.duration_sec,
+    }
 
 
 def main():
@@ -146,7 +152,7 @@ def main():
     global youtube_api
     youtube_api = YoutubeDataApi(config.youtube_api_key)
 
-    run_rabbit_app("backend-api", "127.0.0.1", 5672, "guest", "guest", routes)
+    run_rabbit_app("dmz", "127.0.0.1", 5672, "guest", "guest", routes)
 
 
 if __name__ == "__main__":
