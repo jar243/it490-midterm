@@ -20,12 +20,14 @@ if (isset($_GET['id'])) {
     $err_msg = 'No movie id supplied';
 }
 
+$btn_err_msg = null;
+
 if (!is_null($err_msg)) {
     // pass
 } else if (isset($_POST['leave'])) {
     $res = $rc->leave_watch_party($token, $party_id);
     if ($res->is_error) {
-        $err_msg = $res->msg;
+        $btn_err_msg = $res->msg;
     } else {
         header("location: /");
         exit();
@@ -33,12 +35,12 @@ if (!is_null($err_msg)) {
 } else if (isset($_POST['play'])) {
     $res = $rc->play_watch_party($token, $party_id);
     if ($res->is_error) {
-        $err_msg = $res->msg;
+        $btn_err_msg = $res->msg;
     }
 } else if (isset($_POST['pause'])) {
     $res = $rc->pause_watch_party($token, $party_id);
     if ($res->is_error) {
-        $err_msg = $res->msg;
+        $btn_err_msg = $res->msg;
     }
 }
 
@@ -80,6 +82,9 @@ if (!is_null($err_msg)) : ?>
                     </form>
                 </div>
             </div>
+            <?php if (!is_null($btn_err_msg)) : ?>
+                <div class="alert alert-danger mb-3" style="width: 100%;"><?= $btn_err_msg ?></div>
+            <?php endif; ?>
         </div>
         <div class="col-md-9">
             <iframe style="width: 100%;" id="ytplayer" type="text/html" src="<?= $player_url ?>" frameborder="0">

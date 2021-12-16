@@ -314,4 +314,14 @@ class RabbitClient
             ]
         );
     }
+
+    public function get_youtube_movie(string $movie_title)
+    {
+        return $this->publish(
+            'api.youtube.get-movie',
+            [
+                'movie_title' => $movie_title
+            ]
+        );
+    }
 }

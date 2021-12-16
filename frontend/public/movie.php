@@ -29,7 +29,7 @@ if (isset($_GET['id'])) {
         }
     }
 } else {
-    $err_msg = 'No movie id supplied';
+    $err_msg = 'No movie ID supplied';
 }
 
 if (is_null($err_msg) && isset($_POST['submit_review'])) {
@@ -57,6 +57,9 @@ endif;
                 <h2 class="card-title"><?= $movie->title ?></h2>
                 <h5 class="card-subtitle text-muted"><?= $movie->year ?></h5>
                 <p class="card-text mt-2"><?= $movie->description ?></p>
+                <?php if ($is_logged_in) : ?>
+                    <a href="/create-watch-party.php?movie_id=<?= $movie->id ?>"></a>
+                <?php endif; ?>
             </div>
         </div>
     </div>
