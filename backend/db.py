@@ -15,15 +15,24 @@ from env import EnvConfig
 # TABLE MODELS
 
 
+class WatchPartyLink(SQLModel, table=True):
+    party_id: Optional[int] = Field(
+        default=None, primary_key=True, foreign_key="watchparty.id"
+    )
+    user_id: Optional[int] = Field(
+        default=None, primary_key=True, foreign_key="user.id"
+    )
+
+
 class Movie(SQLModel, table=True):
     id: str = Field(primary_key=True)
     title: str = Field(index=False)
     description: str = Field(max_length=5000, index=False)
     year: int = Field(index=False)
     poster_url: str = Field(max_length=1000, index=False)
+    runtime: int = Field(index=False)
 
     youtube_id: Optional[str] = Field(default=None, index=False)
-    youtube_length: Optional[int] = Field(default=None, index=False)
 
     ratings: List["MovieRating"] = Relationship(back_populates="movie")
     watch_parties: List["WatchParty"] = Relationship(back_populates="movie")
@@ -82,7 +91,7 @@ class User(SQLModel, table=True):
         },
     )
     watch_parties: List["WatchParty"] = Relationship(
-        link_model="WatchPartyLink",
+        link_model=WatchPartyLink,
         sa_relationship_kwargs={
             "primaryjoin": "User.id==WatchPartyLink.user_id",
             "secondaryjoin": "WatchParty.id==WatchPartyLink.party_id",
@@ -110,15 +119,6 @@ class AuthToken(SQLModel, table=True):
     user_id: int = Field(foreign_key="user.id", index=False)
     user: User = Relationship(back_populates="tokens")
     expiration_date: datetime = Field(default_factory=token_exp_factory, index=False)
-
-
-class WatchPartyLink(SQLModel, table=True):
-    party_id: Optional[int] = Field(
-        default=None, primary_key=True, foreign_key="watchparty.id"
-    )
-    user_id: Optional[int] = Field(
-        default=None, primary_key=True, foreign_key="user.id"
-    )
 
 
 class WatchPartyStatus(str, Enum):
@@ -262,7 +262,7 @@ class DatabaseFacade:
             session.add(user)
             return [
                 friend.dict(include={"username": ..., "display_name": ...})
-                for friend in user.friends
+                for friend in user.friend_requests
             ]
 
     def get_user_watch_parties(self, user: User):
@@ -282,6 +282,7 @@ class DatabaseFacade:
             session.add(friend_request)
             try:
                 session.commit()
+                session.refresh(recipient)
             except IntegrityError as err:
                 if err.orig.args[0] == 1062:
                     raise UserError("Friend request already sent")
@@ -372,12 +373,11 @@ class DatabaseFacade:
         self,
         movie: Movie,
         youtube_id: str,
-        movie_length: int,
         participants: list[User],
     ):
         with Session(self._engine) as session:
             new_wp = WatchParty(
-                movie_id=movie.id, movie_length=movie_length, youtube_id=youtube_id
+                movie_id=movie.id, movie_length=movie.runtime, youtube_id=youtube_id
             )
             session.add(new_wp)
             for participant in participants:
@@ -386,7 +386,6 @@ class DatabaseFacade:
             if movie.youtube_id is None:
                 session.add(movie)
                 movie.youtube_id = youtube_id
-                movie.youtube_length = movie_length
                 session.commit()
             session.refresh(new_wp)
             return new_wp
@@ -422,7 +421,9 @@ class DatabaseFacade:
                 session.commit()
 
     def _dict_watch_party(self, watch_party: WatchParty):
-        data = watch_party.dict(exclude={"movie_id": ...})
+        data = watch_party.dict(
+            exclude={"movie_id": ..., "pause_time": ..., "last_play": ...}
+        )
         if watch_party.movie is not None:
             data["movie"] = watch_party.movie.dict()
         data["participants"] = [

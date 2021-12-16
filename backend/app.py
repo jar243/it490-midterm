@@ -2,7 +2,7 @@ import warnings
 
 from pydantic import BaseModel, EmailStr, Field
 from sqlalchemy.exc import SAWarning
-from backend.broker import UserError
+from broker import UserError
 
 from broker import run_rabbit_app
 from db import DatabaseFacade
@@ -177,7 +177,7 @@ class MovieAddRequest(BaseModel):
     id: str
     title: str
     description: str = Field(max_length=5000)
-    # genre_ids: list[int]
+    runtime: int
     year: int
     poster_url: str = Field(max_length=1000)
 
@@ -217,7 +217,6 @@ def handle_watch_party_get(req_body: dict):
 class WatchPartyScheduleReq(BaseModel):
     token: str
     movie_id: str
-    movie_length: int
     youtube_id: str
     participants: list[str]
 
@@ -236,7 +235,6 @@ def handle_watch_party_schedule(req_body: dict):
     watch_party = db.schedule_watch_party(
         movie=movie,
         youtube_id=req.youtube_id,
-        movie_length=req.movie_length,
         participants=[db.get_user(username) for username in full_participants],
     )
     return db.get_watch_party_data(watch_party)
