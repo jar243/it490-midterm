@@ -267,7 +267,7 @@ class RabbitClient
         string $token,
         string $movie_id,
         int $movie_length,
-        string $youtube_url,
+        string $youtube_id,
         array $participants
     ) {
         return $this->publish(
@@ -276,8 +276,8 @@ class RabbitClient
                 'token' => $token,
                 'movie_id' => $movie_id,
                 'movie_length' => $movie_length,
-                'youtube_url' => $youtube_url,
-                '$participants' => $participants
+                'youtube_id' => $youtube_id,
+                'participants' => $participants
             ]
         );
     }
