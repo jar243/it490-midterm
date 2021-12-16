@@ -218,7 +218,7 @@ class WatchPartyScheduleReq(BaseModel):
     token: str
     movie_id: str
     movie_length: int
-    youtube_url: str
+    youtube_id: str
     participants: list[str]
 
 
@@ -235,7 +235,7 @@ def handle_watch_party_schedule(req_body: dict):
     movie = db.get_movie(req.movie_id)
     watch_party = db.schedule_watch_party(
         movie=movie,
-        youtube_url=req.youtube_url,
+        youtube_id=req.youtube_id,
         movie_length=req.movie_length,
         participants=[db.get_user(username) for username in full_participants],
     )

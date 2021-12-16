@@ -21,6 +21,10 @@ class Movie(SQLModel, table=True):
     description: str = Field(max_length=5000, index=False)
     year: int = Field(index=False)
     poster_url: str = Field(max_length=1000, index=False)
+
+    youtube_id: Optional[str] = Field(default=None, index=False)
+    youtube_length: Optional[int] = Field(default=None, index=False)
+
     ratings: List["MovieRating"] = Relationship(back_populates="movie")
     watch_parties: List["WatchParty"] = Relationship(back_populates="movie")
 
@@ -125,7 +129,7 @@ class WatchPartyStatus(str, Enum):
 class WatchParty(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     movie_id: str = Field(foreign_key="movie.id", index=False)
-    youtube_url: str
+    youtube_id: str
     movie_length: int = Field(index=False)
 
     status: WatchPartyStatus = Field(default=WatchPartyStatus.PAUSED, index=False)
@@ -140,6 +144,13 @@ class WatchParty(SQLModel, table=True):
             "secondaryjoin": "User.id==WatchPartyLink.user_id",
         },
     )
+
+    def get_current_time(self):
+        if self.status == WatchPartyStatus.PAUSED:
+            return self.pause_time
+        time_passed = datetime.utcnow() - self.last_play
+        seconds_passed = self.pause_time + math.trunc(time_passed.total_seconds())
+        return seconds_passed if seconds_passed < self.movie_length else 0
 
 
 # FACADE CLASS
@@ -360,18 +371,23 @@ class DatabaseFacade:
     def schedule_watch_party(
         self,
         movie: Movie,
-        youtube_url: str,
+        youtube_id: str,
         movie_length: int,
         participants: list[User],
     ):
         with Session(self._engine) as session:
             new_wp = WatchParty(
-                movie_id=movie.id, movie_length=movie_length, youtube_url=youtube_url
+                movie_id=movie.id, movie_length=movie_length, youtube_id=youtube_id
             )
             session.add(new_wp)
             for participant in participants:
                 new_wp.participants.append(participant)
             session.commit()
+            if movie.youtube_id is None:
+                session.add(movie)
+                movie.youtube_id = youtube_id
+                movie.youtube_length = movie_length
+                session.commit()
             session.refresh(new_wp)
             return new_wp
 
@@ -382,13 +398,7 @@ class DatabaseFacade:
             if watch_party.status == WatchPartyStatus.PAUSED:
                 raise UserError("Movie is already paused")
             watch_party.status = WatchPartyStatus.PAUSED
-            time_passed = datetime.utcnow() - watch_party.last_play
-            seconds_passed = watch_party.pause_time + math.trunc(
-                time_passed.total_seconds()
-            )
-            watch_party.pause_time = (
-                seconds_passed if seconds_passed < watch_party.movie_length else 0
-            )
+            watch_party.pause_time = watch_party.get_current_time()
             session.commit()
 
     def play_watch_party(self, watch_party: WatchParty):
@@ -416,8 +426,12 @@ class DatabaseFacade:
         if watch_party.movie is not None:
             data["movie"] = watch_party.movie.dict()
         data["participants"] = [
-            participant.username
+            {
+                "username": participant.username,
+                "display_name": participant.display_name,
+            }
             for participant in watch_party.participants
             if participant is not None
         ]
+        data["current_time"] = watch_party.get_current_time()
         return data
