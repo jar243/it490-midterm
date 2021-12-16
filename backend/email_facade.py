@@ -11,7 +11,7 @@ class EmailFacade:
     def send(self, recipients: Union[list[str], str], subject: str, body: str):
         msg = MIMEMultipart()
         msg["Subject"] = subject
-        msg["From"] = f'"MovieWorld" <{self._sender}>'
+        msg["From"] = f'"Movie World" <{self._sender}>'
         txt = MIMEText(body)
         msg.attach(txt)
 

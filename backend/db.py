@@ -11,6 +11,7 @@ from sqlmodel import Field, Relationship, Session, SQLModel, create_engine, sele
 
 from broker import UserError
 from env import EnvConfig
+from email_facade import EmailFacade
 
 # TABLE MODELS
 
@@ -282,7 +283,6 @@ class DatabaseFacade:
             session.add(friend_request)
             try:
                 session.commit()
-                session.refresh(recipient)
             except IntegrityError as err:
                 if err.orig.args[0] == 1062:
                     raise UserError("Friend request already sent")
@@ -363,6 +363,23 @@ class DatabaseFacade:
                 if wp.id == watch_party_id:
                     return wp
             raise UserError("Watch party does not exist")
+
+    def send_watch_party_emails(self, watch_party: WatchParty, email: EmailFacade):
+        with Session(self._engine) as session:
+            session.add(watch_party)
+            if watch_party.movie is None:
+                raise RuntimeError("Watch parties must have a movie")
+            emails = [str(user.email) for user in watch_party.participants]
+            email.send(
+                emails,
+                f"Watch Party Invite: {watch_party.movie.title}",
+                f"""Hello there!
+                
+                You've been invited to watch {watch_party.movie.title}!
+                
+                Description:
+                {watch_party.movie.description}""",
+            )
 
     def get_watch_party_data(self, watch_party: WatchParty):
         with Session(self._engine) as session:

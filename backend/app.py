@@ -150,7 +150,7 @@ def handle_friend_request_decline(req_body: dict):
     rq = ModifyFriendRequest(**req_body)
     recipient = db.get_token_user(rq.token)
     sender = db.get_user(rq.sender_username)
-    db.accept_friend_request(sender, recipient)
+    db.decline_friend_request(sender, recipient)
 
 
 # review routes
@@ -237,6 +237,7 @@ def handle_watch_party_schedule(req_body: dict):
         youtube_id=req.youtube_id,
         participants=[db.get_user(username) for username in full_participants],
     )
+    db.send_watch_party_emails(watch_party, email)
     return db.get_watch_party_data(watch_party)
 
 
