@@ -1,0 +1,22 @@
+version: "3"
+
+services:
+  rabbitmq:
+    image: rabbitmq:3.9.7-management
+    container_name: 'it490-rabbitmq'
+    ports:
+        - 5672:5672
+        - 15672:15672
+    networks:
+        - it490_rabbitmq_net
+  smtp:
+    image: namshi/smtp
+    container_name: it490-mailserver
+    restart: always
+    ports:
+     - "25:25"
+
+
+networks:
+  it490_rabbitmq_net:
+    driver: bridge
