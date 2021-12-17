@@ -1,9 +1,19 @@
 from broker import run_rabbit_app
 
+import pysftp as sftp
 
-def main():
-    pass
+def sftpMain ():
+    try:
 
+        s = sftp.Connection(
+                host="127.0.0.1", 
+                username='sftpuser', 
+                password='sftp123'
+                )
 
-if __name__ == "__main__":
-    main()
+        remotepath='/sftpuser'
+        localpath ='/home/it490/'
+    except Exception:
+        print (Exception)
+
+sftpMain()
