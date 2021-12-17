@@ -1,5 +1,3 @@
-from broker import run_rabbit_app
-
 import pysftp as sftp
 
 def sftpMain ():
