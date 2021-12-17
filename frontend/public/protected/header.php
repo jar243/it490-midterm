@@ -1,5 +1,4 @@
 <?php
-ob_start();
 require('protected/RabbitClient.php');
 require('protected/Utils.php');
 
@@ -10,8 +9,6 @@ $broker_host = getenv('IT490_BROKER_HOST') !== false ? getenv('IT490_BROKER_HOST
 $broker_port = getenv('IT490_BROKER_PORT') !== false ? getenv('IT490_BROKER_PORT') : "5672";
 $broker_username = getenv('IT490_BROKER_USERNAME') !== false ? getenv('IT490_BROKER_USERNAME') : "guest";
 $broker_password = getenv('IT490_BROKER_PASSWORD') !== false ? getenv('IT490_BROKER_PASSWORD') : "guest";
-
-echo $broker_port;
 
 $rc = new RabbitClient($broker_host, $broker_port, $broker_username, $broker_password);
 $token = isset($_COOKIE['token']) ? $_COOKIE['token'] : null;
