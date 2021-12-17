@@ -18,6 +18,7 @@ class EnvConfig(BaseSettings):
     class Config:
         env_file = ".env"
         env_file_encoding = "utf-8"
+        env_prefix = "IT490_"
 
 
 class MoviesApi:
