@@ -153,7 +153,14 @@ def main():
     global youtube_api
     youtube_api = YoutubeDataApi(config.youtube_api_key)
 
-    run_rabbit_app("dmz", "127.0.0.1", 5672, "guest", "guest", routes)
+    run_rabbit_app(
+        "dmz",
+        config.broker_host,
+        config.broker_port,
+        config.broker_user,
+        config.broker_password,
+        routes,
+    )
 
 
 if __name__ == "__main__":
