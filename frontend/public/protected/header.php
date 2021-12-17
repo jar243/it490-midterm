@@ -3,7 +3,17 @@ ob_start();
 require('protected/RabbitClient.php');
 require('protected/Utils.php');
 
-$rc = new RabbitClient('127.0.0.1', 5672, 'guest', 'guest');
+$dotenv = Dotenv\Dotenv::createUnsafeImmutable(__DIR__ . '../../../');
+$dotenv->safeLoad();
+
+$broker_host = getenv('IT490_BROKER_HOST') !== false ? getenv('IT490_BROKER_HOST') : "127.0.0.1";
+$broker_port = getenv('IT490_BROKER_PORT') !== false ? getenv('IT490_BROKER_PORT') : "5672";
+$broker_username = getenv('IT490_BROKER_USERNAME') !== false ? getenv('IT490_BROKER_USERNAME') : "guest";
+$broker_password = getenv('IT490_BROKER_PASSWORD') !== false ? getenv('IT490_BROKER_PASSWORD') : "guest";
+
+echo $broker_port;
+
+$rc = new RabbitClient($broker_host, $broker_port, $broker_username, $broker_password);
 $token = isset($_COOKIE['token']) ? $_COOKIE['token'] : null;
 $active_user = null;
 if (!is_null($token)) {
